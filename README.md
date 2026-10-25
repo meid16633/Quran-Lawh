@@ -27,6 +27,8 @@
 
 **Memorization (الحفظ)**
 - Memorization mode in the mushaf: hide the words, or show only the start of each word, keeping the page layout
+- «سمّع لنفسك»: record yourself reciting a page from memory, then play it back, play the reciter's page, or both in
+  turn, and mark your mistakes on the revealed page (recordings stay on the device)
 - Reveal word by word or ayah by ayah, or tap a word to peek at it
 - Mistake pen: tap the words you get wrong while reciting; they are remembered and tinted in the mushaf
 - Mark pages as memorized (or add whole surahs, juz or page ranges)
@@ -43,6 +45,7 @@
 - An ayah, hadith or dhikr on the lock screen every few minutes, hours or days (you choose), with quiet hours:
   notifications in the Android app (tap an ayah to open it in the mushaf), calendar alerts on iPhone
 - Streak of active days and a weekly chart of pages read and reviewed
+- An Android home-screen widget: today's portion (and what is left of it), khatma progress and the ayah of the day
 
 **Study (التدبر والفهم)**
 - Tafsir al-Muyassar and the meanings of unusual words for every ayah

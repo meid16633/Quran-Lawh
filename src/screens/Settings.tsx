@@ -10,6 +10,7 @@ import { arabicDigits } from '../lib/quran'
 import { deleteAllTakes, recordingsUsage } from '../lib/recorder'
 import { back, navigate } from '../lib/router'
 import { readerPrefs, settings, useStore, type Theme } from '../lib/store'
+import { widgetAvailable } from '../lib/widget'
 
 const THEMES: [Theme, string][] = [
   ['auto', 'تلقائي'],
@@ -90,6 +91,16 @@ export function SettingsScreen() {
           <h2>آية وذكر على شاشة القفل</h2>
           <PeriodicControls />
         </section>
+
+        {widgetAvailable() && (
+          <section className="card settings-section">
+            <h2>ويدجت الشاشة الرئيسية</h2>
+            <p className="muted">
+              اضغط مطولًا على مكان فارغ في الشاشة الرئيسية، واختر «الأدوات» أو «Widgets»، ثم «لوح»: يظهر وردك اليوم وكم
+              بقي منه، وآية اليوم. الضغط على الورد يفتحه من علامة الورد، والضغط على الآية يفتحها في المصحف.
+            </p>
+          </section>
+        )}
 
         <section className="card settings-section">
           <h2>التلاوات</h2>

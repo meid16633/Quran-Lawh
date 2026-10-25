@@ -16,3 +16,22 @@ export function streak(activeDays: Iterable<number>, today: number): number {
   }
   return count
 }
+
+/** The local calendar date of a day number. */
+export function dateOfDay(day: number): Date {
+  const utc = new Date(day * DAY)
+  return new Date(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate())
+}
+
+/** "الخميس ١٤ مايو ٢٠٢٧" and its Hijri date, when the device supports the Umm al-Qura calendar. */
+export function formatDay(day: number): { gregorian: string; hijri: string | null } {
+  const date = dateOfDay(day)
+  const gregorian = date.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  let hijri: string | null = null
+  try {
+    hijri = date.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch {
+    // calendar not supported
+  }
+  return { gregorian, hijri }
+}

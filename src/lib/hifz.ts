@@ -83,13 +83,47 @@ export function clearMistakes(keys: string[]) {
   })
 }
 
-/** Called when the reader moves forward from `page`: counts it as read and advances the khatma. */
-export function pageFinished(page: number) {
+export interface WirdMark {
+  /** Ayah index where the daily wird continues. */
+  ayah: number
+  page: number
+  at: number
+}
+
+/**
+ * Where the daily wird continues. Separate from the last page opened, which also changes when
+ * the reader is used to look something up.
+ */
+export const wirdMark = createStore<WirdMark | null>('lawh:wird-mark', null)
+
+/** Puts the wird mark on an ayah; an active khatma then continues from that page. */
+export function setWirdMark(ayah: number, page: number) {
+  wirdMark.set({ ayah, page, at: Date.now() })
+  const plan = khatma.get()
+  if (plan) khatma.set({ ...plan, progress: Math.max((plan.from ?? 1) - 1, page - 1) })
+}
+
+/** Starts a khatma and puts the wird mark on its first page. */
+export function startKhatma(plan: KhatmaPlan, firstAyah: number) {
+  khatma.set(plan)
+  wirdMark.set({ ayah: firstAyah, page: plan.from ?? 1, at: Date.now() })
+}
+
+/**
+ * Called when the reader moves forward from `page` (or marks it done): counts it as read,
+ * advances the khatma, and moves the wird mark to `nextAyah` (the first ayah of the next page)
+ * when the mark was on this page.
+ */
+export function pageFinished(page: number, nextAyah: number | null) {
   logActivity('read')
   const plan = khatma.get()
   if (plan && page === plan.progress + 1) {
     khatma.set({ ...plan, progress: page })
     if (page === 604) khatmaCount.set((c) => ({ n: c.n + 1 }))
+  }
+  const mark = wirdMark.get()
+  if (mark && mark.page === page) {
+    wirdMark.set(nextAyah === null ? null : { ayah: nextAyah, page: page + 1, at: Date.now() })
   }
 }
 

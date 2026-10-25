@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Icon } from '../components/Icon'
+import { ReminderControls } from '../components/ReminderControls'
 import { backupFileName, exportBackup, importBackup } from '../lib/backup'
 import { useQuran } from '../lib/context'
 import { mistakes } from '../lib/hifz'
 import { arabicDigits } from '../lib/quran'
-import { applyReminder, reminder, remindersAvailable } from '../lib/reminder'
 import { back, navigate } from '../lib/router'
 import { readerPrefs, settings, useStore, type Theme } from '../lib/store'
 
@@ -219,37 +219,10 @@ function Backup() {
 }
 
 function ReminderSection() {
-  const r = useStore(reminder)
-  const [message, setMessage] = useState<string | null>(null)
-  const update = async (patch: Partial<typeof r>) => {
-    const next = { ...r, ...patch }
-    reminder.set(next)
-    const ok = await applyReminder(next)
-    if (!ok && next.enabled) {
-      reminder.set({ ...next, enabled: false })
-      setMessage('لم يُسمح بالإشعارات. فعّلها للتطبيق من إعدادات الهاتف ثم حاول مرة أخرى.')
-    } else {
-      setMessage(next.enabled ? 'سيصلك التذكير كل يوم في الموعد المحدد.' : null)
-    }
-  }
   return (
     <section className="card settings-section">
       <h2>التذكير اليومي</h2>
-      {remindersAvailable() ? (
-        <>
-          <label className="toggle-row">
-            <input type="checkbox" checked={r.enabled} onChange={(e) => void update({ enabled: e.target.checked })} />
-            <span>ذكّرني بالورد والمراجعة كل يوم</span>
-          </label>
-          <label className="toggle-row">
-            <span>الموعد</span>
-            <input className="input time-input" type="time" value={r.time} onChange={(e) => void update({ time: e.target.value })} />
-          </label>
-          {message && <p className="muted">{message}</p>}
-        </>
-      ) : (
-        <p className="muted">التذكير اليومي متاح في تطبيق الأندرويد، لأن تطبيقات الويب على الآيفون لا تستطيع إرسال إشعارات مجدولة دون خادم.</p>
-      )}
+      <ReminderControls />
     </section>
   )
 }

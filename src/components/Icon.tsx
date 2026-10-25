@@ -32,6 +32,7 @@ const PATHS = {
   download: 'M11 4h2v8.2l3.1-3.1 1.4 1.4L12 16l-5.5-5.5 1.4-1.4 3.1 3.1V4ZM5 18h14v2H5v-2Z',
   trophy: 'M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3Zm10 4v3a2 2 0 0 0 1-2V7h-1ZM6 7v1a2 2 0 0 0 1 1.7V7H6Zm3-2v5a3 3 0 0 0 6 0V5H9Z',
   bell: 'M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm6-6V11a6 6 0 0 0-5-5.9V4h-2v1.1A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2Z',
+  flag: 'M5 3h2v18H5V3Zm4 1h9.5l-2 4 2 4H9V4Z',
   trash: 'M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12ZM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4Z',
 } as const
 

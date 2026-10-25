@@ -1,7 +1,7 @@
 {
   "name": "quran-lawh",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "لَوْح – احفظ وراجع: a free, ad-free, offline Quran app",
   "type": "module",
   "scripts": {

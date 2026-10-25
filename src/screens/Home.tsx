@@ -4,9 +4,10 @@ import { ShareImage } from '../components/ShareImage'
 import { TabLayout } from '../components/TabLayout'
 import { TopBar } from '../components/TopBar'
 import { useQuran } from '../lib/context'
+import { count, pagesWord } from '../lib/arabic'
 import { ayahOfTheDay } from '../lib/daily'
 import { dayNumber } from '../lib/dates'
-import { khatma, memorized } from '../lib/hifz'
+import { khatma, memorized, wirdMark } from '../lib/hifz'
 import { khatmaStatus } from '../lib/khatma'
 import { notes } from '../lib/notes'
 import { arabicDigits } from '../lib/quran'
@@ -96,14 +97,14 @@ function TodayCards() {
               ? 'ختمت، ما شاء الله'
               : wird.doneToday
                 ? 'أتممته ✓'
-                : `${arabicDigits(wird.to - wird.from + 1)} صفحة متبقية`}
+                : `المتبقي ${count(wird.to - wird.from + 1, pagesWord)}`}
         </span>
       </button>
       <button className="card mini" onClick={() => navigate('hifz')}>
         <Icon name="cap" />
         <span className="mini-title">مراجعة اليوم</span>
         <span className="mini-sub">
-          {Object.keys(memo).length === 0 ? 'سجّل ما تحفظه' : due === 0 ? 'لا شيء اليوم ✓' : `${arabicDigits(due)} صفحة`}
+          {Object.keys(memo).length === 0 ? 'سجّل ما تحفظه' : due === 0 ? 'لا شيء اليوم ✓' : count(due, pagesWord)}
         </span>
       </button>
     </div>
@@ -113,6 +114,34 @@ function TodayCards() {
 function ContinueCard() {
   const q = useQuran()
   const last = useStore(lastRead)
+  const mark = useStore(wirdMark)
+  const plan = useStore(khatma)
+
+  // The daily wird has its own mark; the last page opened may just be a lookup.
+  if (mark) {
+    const wird = plan ? khatmaStatus(plan, dayNumber()) : null
+    return (
+      <div className="continue-group">
+        <button className="card continue" onClick={() => navigate(`read/${mark.page}?a=${mark.ayah}`)}>
+          <span className="card-label">
+            <Icon name="flag" size={16} /> تابع وردك
+          </span>
+          <span className="card-title quran-font">{q.surahs[q.surahOf(mark.ayah)].name}</span>
+          <span className="card-sub">
+            آية {arabicDigits(q.ayahNo(mark.ayah))} • الصفحة {arabicDigits(mark.page)} • الجزء {arabicDigits(q.juzOf(mark.ayah))}
+            {wird && !wird.finished && (wird.doneToday ? ' • أتممت ورد اليوم ✓' : ` • ورد اليوم حتى ص ${arabicDigits(wird.to)}`)}
+          </span>
+        </button>
+        {last && last.page !== mark.page && (
+          <button className="last-opened" onClick={() => navigate(`read/${last.page}`)}>
+            آخر صفحة فتحتها: {q.surahs[q.surahOf(q.pageRange(last.page)[0])].name} • ص {arabicDigits(last.page)}
+            <Icon name="chevronLeft" size={18} />
+          </button>
+        )}
+      </div>
+    )
+  }
+
   if (!last) {
     return (
       <button className="card continue" onClick={() => navigate('read/1')}>

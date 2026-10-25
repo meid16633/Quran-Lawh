@@ -1969,3 +1969,103 @@ select.input {
   flex: 0 0 auto;
   width: 130px;
 }
+
+/* ---------- phase 5: wird mark and khatma planning ---------- */
+
+.wird-ribbon {
+  display: inline-flex;
+  vertical-align: middle;
+  color: var(--accent);
+  margin-inline-end: 4px;
+}
+
+.continue-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.continue .card-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.last-opened {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.wird-mark {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent);
+}
+
+.hint-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  line-height: 1.8;
+}
+
+.plan-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.number-input {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 36px;
+  text-align: center;
+}
+
+.plan-summary {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--text);
+  line-height: 1.9;
+}
+
+.plan-summary p {
+  margin: 0;
+}
+
+.plan-summary strong {
+  color: var(--accent);
+}
+
+.reminder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reminder .button {
+  align-self: flex-start;
+}
+
+.sheet-actions {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.button-row.center {
+  justify-content: center;
+}

@@ -1,41 +1,77 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Icon } from '../components/Icon'
+import { PlayerBar } from '../components/PlayerBar'
+import { Sheet } from '../components/Sheet'
+import { count, mistakesWord } from '../lib/arabic'
 import { useQuran } from '../lib/context'
+import { dayNumber } from '../lib/dates'
+import { addMistake, gradePage, khatma, markMemorized, memorized, mistakes, pageFinished, removeMistake, unmarkMemorized } from '../lib/hifz'
+import { khatmaStatus } from '../lib/khatma'
+import { player, playerSettings, playerState } from '../lib/player'
 import { arabicDigits } from '../lib/quran'
 import { back, navigate } from '../lib/router'
-import { bookmarks, lastRead, toggleBookmark, useStore } from '../lib/store'
+import { type Grade, suggestGrade } from '../lib/srs'
+import { bookmarks, createMemoryStore, lastRead, readerPrefs, toggleBookmark, useStore } from '../lib/store'
+import { firstLetter, wordKey, words } from '../lib/words'
 
 interface Props {
   page: number
   highlight: number | null
+  review: boolean
 }
 
-export function Reader({ page, highlight }: Props) {
+// Survives page turns (the reader remounts for every page).
+const chromeStore = createMemoryStore(true)
+
+export function Reader({ page, highlight, review }: Props) {
   const q = useQuran()
   const [first, end] = q.pageRange(page)
+  const prefs = useStore(readerPrefs)
+  const chrome = useStore(chromeStore)
+  const mistakeMap = useStore(mistakes)
+  const memo = useStore(memorized)
+  const plan = useStore(khatma)
+  const pstate = useStore(playerState)
+  const psettings = useStore(playerSettings)
   const [selected, setSelected] = useState<number | null>(highlight)
-  const [chrome, setChrome] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
+  const [revealed, setRevealed] = useState<Set<string>>(() => new Set())
+  const [pen, setPen] = useState(false)
+  const [marks, setMarks] = useState<Set<string>>(() => new Set())
+  const [grading, setGrading] = useState(false)
   const pageRef = useRef<HTMLDivElement>(null)
+
+  const mode = prefs.hifz
+  const playing = pstate.status !== 'idle' && pstate.pos && !pstate.pos.basmala ? pstate.pos.i : null
+  const suffix = review ? '?review=1' : ''
 
   const goTo = (p: number) => {
     if (p < 1 || p > q.pageCount) return
-    setSelected(null)
-    navigate(`read/${p}`, { replace: true })
+    if (p === page + 1) pageFinished(page)
+    navigate(`read/${p}${suffix}`, { replace: true })
+  }
+
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 1800)
   }
 
   useEffect(() => {
     lastRead.set({ page, at: Date.now() })
-  }, [page])
+    if (review && readerPrefs.get().hifz === 'off') readerPrefs.set((p) => ({ ...p, hifz: p.lastHifz }))
+  }, [page, review])
 
   useEffect(() => {
-    setSelected(highlight)
-    if (highlight !== null) {
-      document.querySelector(`[data-ayah="${highlight}"]`)?.scrollIntoView({ block: 'center' })
-    } else {
-      pageRef.current?.scrollTo({ top: 0 })
-    }
-  }, [page, highlight])
+    if (highlight !== null) document.querySelector(`[data-ayah="${highlight}"]`)?.scrollIntoView({ block: 'center' })
+  }, [highlight])
+
+  // Follow the recitation: turn to its page and keep the ayah in view.
+  useEffect(() => {
+    if (playing === null || !psettings.follow) return
+    const p = q.pageOf(playing)
+    if (p !== page) navigate(`read/${p}${suffix}`, { replace: true })
+    else document.querySelector(`[data-ayah="${playing}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [playing])
 
   // Arabic mushaf: the next page is to the left.
   useEffect(() => {
@@ -59,12 +95,63 @@ export function Reader({ page, highlight }: Props) {
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) goTo(dx > 0 ? page + 1 : page - 1)
   }
 
-  const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 1800)
+  // ---- memorization ----
+  const pageWords: string[][] = []
+  for (let i = first; i < end; i++) pageWords.push(words(q.text[i]))
+  const isHidden = (key: string) => mode !== 'off' && !revealed.has(key)
+
+  const reveal = (keys: string[]) => setRevealed((prev) => new Set([...prev, ...keys]))
+
+  const firstHidden = (): [number, number] | null => {
+    for (let a = 0; a < pageWords.length; a++)
+      for (let w = 0; w < pageWords[a].length; w++) if (isHidden(wordKey(first + a, w))) return [first + a, w]
+    return null
   }
 
-  // Split the page into runs of ayahs, starting a new run at every surah opening.
+  const revealNextWord = () => {
+    const next = firstHidden()
+    if (!next) return showToast('ظهرت الصفحة كلها')
+    const key = wordKey(...next)
+    reveal([key])
+    document.querySelector(`[data-word="${key}"]`)?.scrollIntoView({ block: 'nearest' })
+  }
+
+  const revealNextAyah = () => {
+    const next = firstHidden()
+    if (!next) return showToast('ظهرت الصفحة كلها')
+    const [a] = next
+    reveal(pageWords[a - first].map((_, w) => wordKey(a, w)))
+    document.querySelector(`[data-ayah="${a}"]`)?.scrollIntoView({ block: 'nearest' })
+  }
+
+  const toggleMark = (key: string) => {
+    if (marks.has(key)) {
+      removeMistake(key)
+      setMarks((m) => new Set([...m].filter((k) => k !== key)))
+    } else {
+      addMistake(key)
+      setMarks((m) => new Set([...m, key]))
+      navigator.vibrate?.(15)
+    }
+  }
+
+  const onWord = (key: string) => (e: React.MouseEvent) => {
+    if (pen) {
+      e.stopPropagation()
+      toggleMark(key)
+    } else if (isHidden(key)) {
+      e.stopPropagation()
+      reveal([key])
+    }
+  }
+
+  const setMode = (hifz: 'off' | 'hide' | 'first') => {
+    readerPrefs.set((p) => ({ ...p, hifz, lastHifz: hifz === 'off' ? p.lastHifz : hifz }))
+    setRevealed(new Set())
+    if (hifz === 'off') setPen(false)
+  }
+
+  // ---- page content ----
   const blocks: ReactNode[] = []
   let run: ReactNode[] = []
   const flush = () => {
@@ -78,78 +165,160 @@ export function Reader({ page, highlight }: Props) {
       flush()
       blocks.push(<SurahHeader key={`h${s}`} surah={s} />)
     }
+    const ws = pageWords[i - first]
     run.push(
       <span
         key={i}
         data-ayah={i}
-        className={'ayah' + (selected === i ? ' selected' : '')}
+        className={'ayah' + (selected === i ? ' selected' : '') + (playing === i ? ' playing' : '')}
         onClick={(e) => {
           e.stopPropagation()
-          setSelected(selected === i ? null : i)
+          if (!pen) setSelected(selected === i ? null : i)
         }}
       >
+        {ws.map((w, k) => {
+          const key = wordKey(i, k)
+          const m = mistakeMap[key]
+          let cls = 'w'
+          if (isHidden(key)) cls += mode === 'hide' ? ' hidden' : ' first'
+          if (m && (prefs.showMistakes || mode !== 'off' || pen)) cls += ` mistake m${Math.min(m.n, 3)}`
+          if (marks.has(key)) cls += ' marked'
+          return (
+            <Fragment key={k}>
+              {k > 0 && ' '}
+              <span
+                className={cls}
+                data-word={key}
+                data-first={mode === 'first' ? firstLetter(w) : undefined}
+                onClick={onWord(key)}
+              >
+                {w}
+              </span>
+            </Fragment>
+          )
+        })}
         {/* A no-break space keeps the ayah number on the same line as the last word. */}
-        {q.text[i]}{'\u00a0'}<span className="ayah-num">{arabicDigits(n)}</span>{' '}
+        {' '}
+        <span className="ayah-num">{arabicDigits(n)}</span>{' '}
       </span>,
     )
   }
   flush()
 
   const headerSurah = q.surahs[q.surahOf(first)]
+  const isMemorized = Boolean(memo[page])
+  const wird = plan ? khatmaStatus(plan, dayNumber()) : null
+  const wirdEndsHere = wird && !wird.doneToday && page === plan!.progress + 1 && (page === wird.to || page === q.pageCount)
+  const playerActive = pstate.status !== 'idle'
 
   return (
     <div className="reader">
-      <header className={'topbar reader-bar' + (chrome ? '' : ' hidden')}>
+      <header className={'topbar reader-bar' + (chrome || mode !== 'off' ? '' : ' hidden')}>
         <button className="icon-button" aria-label="رجوع" onClick={back}>
           <Icon name="chevronRight" />
         </button>
         <div className="reader-title">
           <span className="quran-font">{headerSurah.name}</span>
           <span className="reader-meta">
-            الجزء {arabicDigits(q.juzOf(first))} • الربع {arabicDigits(q.hizbQuarterOf(first))}
+            {review ? 'مراجعة • ' : ''}الجزء {arabicDigits(q.juzOf(first))} • الربع {arabicDigits(q.hizbQuarterOf(first))}
           </span>
         </div>
+        <button
+          className={'icon-button' + (mode !== 'off' ? ' on' : '')}
+          aria-label="وضع الحفظ"
+          aria-pressed={mode !== 'off'}
+          onClick={() => setMode(mode === 'off' ? prefs.lastHifz : 'off')}
+        >
+          <Icon name="eye" />
+        </button>
+        <button
+          className={'icon-button' + (playerActive ? ' on' : '')}
+          aria-label="استماع"
+          onClick={() => (playerActive ? player.toggle() : player.play(q, selected ?? first))}
+        >
+          <Icon name="headphones" />
+        </button>
         <button className="icon-button" aria-label="بحث" onClick={() => navigate('search')}>
           <Icon name="search" />
-        </button>
-        <button className="icon-button" aria-label="الرئيسية" onClick={() => navigate('', { replace: true })}>
-          <Icon name="home" />
         </button>
       </header>
 
       <div
-        className="page-scroll"
+        className={'page-scroll' + (pen ? ' pen-mode' : '')}
         ref={pageRef}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
-        onClick={() => (selected !== null ? setSelected(null) : setChrome((c) => !c))}
+        onClick={() => (selected !== null ? setSelected(null) : chromeStore.set((c) => !c))}
       >
-        <article className="page">
+        <article className={'page' + (mode !== 'off' ? ' with-tools' : '')}>
           {blocks}
+          {wirdEndsHere && (
+            <button
+              className="button wide wird-done"
+              onClick={(e) => {
+                e.stopPropagation()
+                pageFinished(page)
+                showToast(page === q.pageCount ? 'ختمت القرآن، تقبّل الله منك' : 'أتممت ورد اليوم، بارك الله فيك')
+              }}
+            >
+              <Icon name="check" /> {page === q.pageCount ? 'أتممت الختمة' : 'أتممت ورد اليوم'}
+            </button>
+          )}
           <footer className="page-number">{arabicDigits(page)}</footer>
         </article>
       </div>
 
-      {selected !== null ? (
-        <AyahActions
-          index={selected}
-          onClose={() => setSelected(null)}
-          onToast={showToast}
-        />
-      ) : (
-        <nav className={'pager' + (chrome ? '' : ' hidden')}>
-          <button className="icon-button" aria-label="الصفحة السابقة" onClick={() => goTo(page - 1)} disabled={page <= 1}>
-            <Icon name="chevronRight" />
-          </button>
-          <span className="pager-label">
-            صفحة {arabicDigits(page)} من {arabicDigits(q.pageCount)}
-          </span>
-          <button className="icon-button" aria-label="الصفحة التالية" onClick={() => goTo(page + 1)} disabled={page >= q.pageCount}>
-            <Icon name="chevronLeft" />
-          </button>
-        </nav>
-      )}
+      <div className="bottom-stack" onClick={(e) => e.stopPropagation()}>
+        {selected !== null ? (
+          <AyahActions index={selected} onClose={() => setSelected(null)} onToast={showToast} />
+        ) : (
+          <>
+            {mode !== 'off' && (
+              <HifzBar
+                mode={mode}
+                pen={pen}
+                review={review}
+                memorized={isMemorized}
+                marks={marks.size}
+                onMode={setMode}
+                onPen={() => setPen((p) => !p)}
+                onWord={revealNextWord}
+                onAyah={revealNextAyah}
+                onHide={() => setRevealed(new Set())}
+                onMemorized={() => {
+                  if (isMemorized) {
+                    unmarkMemorized(page)
+                    showToast('أُزيلت من المحفوظ')
+                  } else {
+                    markMemorized([page])
+                    showToast('أُضيفت للمحفوظ، وستظهر في مراجعاتك')
+                  }
+                }}
+                onFinish={() => setGrading(true)}
+              />
+            )}
+            {playerActive ? (
+              <PlayerBar />
+            ) : (
+              mode === 'off' && (
+                <nav className={'pager' + (chrome ? '' : ' hidden')}>
+                  <button className="icon-button" aria-label="الصفحة السابقة" onClick={() => goTo(page - 1)} disabled={page <= 1}>
+                    <Icon name="chevronRight" />
+                  </button>
+                  <span className="pager-label">
+                    صفحة {arabicDigits(page)} من {arabicDigits(q.pageCount)}
+                  </span>
+                  <button className="icon-button" aria-label="الصفحة التالية" onClick={() => goTo(page + 1)} disabled={page >= q.pageCount}>
+                    <Icon name="chevronLeft" />
+                  </button>
+                </nav>
+              )
+            )}
+          </>
+        )}
+      </div>
 
+      {grading && <GradeSheet page={page} mistakes={marks.size} onClose={() => setGrading(false)} />}
       {toast && <div className="toast">{toast}</div>}
     </div>
   )
@@ -169,6 +338,97 @@ function SurahHeader({ surah }: { surah: number }) {
       </div>
       {basmala && <p className="basmala quran-font">{q.text[0]}</p>}
     </div>
+  )
+}
+
+interface HifzBarProps {
+  mode: 'hide' | 'first'
+  pen: boolean
+  review: boolean
+  memorized: boolean
+  marks: number
+  onMode: (m: 'hide' | 'first') => void
+  onPen: () => void
+  onWord: () => void
+  onAyah: () => void
+  onHide: () => void
+  onMemorized: () => void
+  onFinish: () => void
+}
+
+function HifzBar(p: HifzBarProps) {
+  return (
+    <div className="hifz-bar">
+      <div className="hifz-row">
+        <div className="chips compact" role="radiogroup" aria-label="طريقة الإخفاء">
+          <button role="radio" aria-checked={p.mode === 'hide'} className="chip" onClick={() => p.onMode('hide')}>
+            إخفاء
+          </button>
+          <button role="radio" aria-checked={p.mode === 'first'} className="chip" onClick={() => p.onMode('first')}>
+            أوائل الكلمات
+          </button>
+        </div>
+        <button className={'tool' + (p.pen ? ' active danger' : '')} aria-pressed={p.pen} onClick={p.onPen}>
+          <Icon name="pen" size={18} />
+          <span>{p.pen ? `الأخطاء: ${arabicDigits(p.marks)}` : 'قلم الأخطاء'}</span>
+        </button>
+        {!p.review && (
+          <button className={'tool' + (p.memorized ? ' active' : '')} aria-pressed={p.memorized} onClick={p.onMemorized}>
+            <Icon name={p.memorized ? 'check' : 'star'} size={18} />
+            <span>{p.memorized ? 'محفوظة' : 'حفظتها'}</span>
+          </button>
+        )}
+      </div>
+      {p.pen && <p className="hint">اضغط على أي كلمة أخطأت فيها لتسجيلها، واضغط مرة أخرى للتراجع.</p>}
+      <div className="hifz-row actions">
+        <button className="tool big" onClick={p.onWord}>اكشف كلمة</button>
+        <button className="tool big" onClick={p.onAyah}>اكشف آية</button>
+        <button className="tool big" aria-label="إخفاء الكل" onClick={p.onHide}>
+          <Icon name="refresh" size={18} />
+        </button>
+        {p.review && (
+          <button className="tool big primary" onClick={p.onFinish}>
+            إنهاء المراجعة
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const GRADES: [Grade, string, string][] = [
+  [0, 'نسيتها', 'تعود غدًا'],
+  [3, 'صعبة', 'تعود قريبًا'],
+  [4, 'جيدة', 'تتباعد'],
+  [5, 'ممتازة', 'تتباعد أكثر'],
+]
+
+function GradeSheet({ page, mistakes: n, onClose }: { page: number; mistakes: number; onClose: () => void }) {
+  const q = useQuran()
+  const suggested = suggestGrade(n)
+  const grade = (g: Grade) => {
+    gradePage(page, g)
+    const today = dayNumber()
+    const due = Object.entries(memorized.get())
+      .filter(([p, c]) => Number(p) !== page && c.due <= today)
+      .sort((a, b) => a[1].due - b[1].due || Number(a[0]) - Number(b[0]))
+    if (due.length) navigate(`read/${due[0][0]}?review=1`, { replace: true })
+    else navigate('hifz?done=1', { replace: true })
+  }
+  return (
+    <Sheet title={`كيف كانت مراجعة صفحة ${arabicDigits(page)}؟`} onClose={onClose}>
+      <p className="grade-summary">
+        {q.surahs[q.surahOf(q.pageRange(page)[0])].name}: {n === 0 ? 'لم تسجّل أي خطأ.' : `عدد الأخطاء المسجّلة: ${count(n, mistakesWord)}.`}
+      </p>
+      <div className="grades">
+        {GRADES.map(([g, label, sub]) => (
+          <button key={g} className={'grade g' + g + (g === suggested ? ' suggested' : '')} onClick={() => grade(g)}>
+            <strong>{label}</strong>
+            <small>{sub}</small>
+          </button>
+        ))}
+      </div>
+    </Sheet>
   )
 }
 
@@ -201,9 +461,19 @@ function AyahActions({ index, onClose, onToast }: { index: number; onClose: () =
   }
 
   return (
-    <div className="sheet" onClick={(e) => e.stopPropagation()}>
+    <div className="sheet">
       <div className="sheet-title">{ref}</div>
-      <div className="sheet-actions">
+      <div className="sheet-actions five">
+        <button
+          className="sheet-button"
+          onClick={() => {
+            player.play(q, index)
+            onClose()
+          }}
+        >
+          <Icon name="play" />
+          <span>استماع</span>
+        </button>
         <button
           className={'sheet-button' + (marked ? ' active' : '')}
           onClick={() => {
@@ -212,7 +482,7 @@ function AyahActions({ index, onClose, onToast }: { index: number; onClose: () =
           }}
         >
           <Icon name={marked ? 'bookmarkFilled' : 'bookmark'} />
-          <span>{marked ? 'إزالة العلامة' : 'علامة'}</span>
+          <span>{marked ? 'إزالة' : 'علامة'}</span>
         </button>
         <button className="sheet-button" onClick={copy}>
           <Icon name="copy" />

@@ -3,8 +3,10 @@ import { QuranContext } from './lib/context'
 import { loadQuran, type Quran } from './lib/quran'
 import { useRoute } from './lib/router'
 import { settings, useStore } from './lib/store'
+import { Hifz } from './screens/Hifz'
 import { Home } from './screens/Home'
 import { Reader } from './screens/Reader'
+import { Wird } from './screens/Wird'
 import { Search } from './screens/Search'
 import { SettingsScreen } from './screens/Settings'
 
@@ -48,7 +50,13 @@ export function App() {
   if (screen === 'read') {
     const page = Math.min(Math.max(Number(arg) || 1, 1), quran.pageCount)
     const ayah = route.params.get('a')
-    content = <Reader page={page} highlight={ayah === null ? null : Number(ayah)} />
+    content = (
+      <Reader key={page} page={page} highlight={ayah === null ? null : Number(ayah)} review={route.params.get('review') === '1'} />
+    )
+  } else if (screen === 'hifz') {
+    content = <Hifz done={route.params.get('done') === '1'} />
+  } else if (screen === 'wird') {
+    content = <Wird />
   } else if (screen === 'search') {
     content = <Search initialQuery={route.params.get('q') ?? ''} />
   } else if (screen === 'settings') {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Icon } from '../components/Icon'
+import { PeriodicControls } from '../components/PeriodicControls'
 import { ReminderControls } from '../components/ReminderControls'
 import { TajweedGuide } from '../components/TajweedGuide'
 import { backupFileName, exportBackup, importBackup } from '../lib/backup'
@@ -86,6 +87,11 @@ export function SettingsScreen() {
         <ReminderSection />
 
         <section className="card settings-section">
+          <h2>آية وذكر على شاشة القفل</h2>
+          <PeriodicControls />
+        </section>
+
+        <section className="card settings-section">
           <h2>التلاوات</h2>
           <button className="button secondary" onClick={() => navigate('downloads')}>
             <Icon name="download" size={18} /> تحميل السور للاستماع بدون إنترنت
@@ -112,6 +118,11 @@ export function SettingsScreen() {
           <p>
             «التفسير الميسر» و«الميسر في غريب القرآن الكريم» من مجمع الملك فهد، عن المكتبة القرآنية الشاملة (QUL)
             لمنصة ترتيل. أما «المتشابهات» فتُحسب داخل التطبيق من نص المصحف نفسه.
+          </p>
+          <h3>الأحاديث والأذكار</h3>
+          <p>
+            ما يظهر على شاشة القفل نصوص قصيرة من صحيحي البخاري ومسلم فقط، طوبق كل نص منها آليًا كلمةً كلمة مع متن الكتاب
+            المنسوب إليه، و«متفق عليه» لما وُجد فيهما معًا.
           </p>
           <h3>ألوان التجويد</h3>
           <p>

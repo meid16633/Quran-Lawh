@@ -40,6 +40,8 @@
 - A wird bookmark (علامة الورد), separate from the last page opened: it moves forward as you read and can be
   placed on any ayah; the home screen continues the wird, not the last lookup
 - A daily reminder at a chosen time: a notification in the Android app, or a repeating calendar event on iPhone
+- An ayah, hadith or dhikr on the lock screen every few minutes, hours or days (you choose), with quiet hours:
+  notifications in the Android app (tap an ayah to open it in the mushaf), calendar alerts on iPhone
 - Streak of active days and a weekly chart of pages read and reviewed
 
 **Study (التدبر والفهم)**
@@ -88,6 +90,10 @@ Tafsir al-Muyassar and *al-Muyassar fi Gharib al-Qur'an* (word meanings) are fro
 Tarteel's Quranic Universal Library as packaged in [tafsir_api](https://github.com/spa5k/tafsir_api)
 (`scripts/build-tafsir.mjs`). Similar verses (المتشابهات) are computed from the text by
 `scripts/build-similar.mjs`. Hizb quarters and sajdas come from [quran-meta](https://github.com/quran-center/quran-meta) (MIT).
+
+The hadiths and adhkar of the lock-screen reminders (`src/data/reminders.ts`) are short texts from Sahih
+al-Bukhari and Sahih Muslim only. `scripts/check-reminders.mjs` checks each one, word for word, against the full text
+of the book it is attributed to (both books for «متفق عليه»).
 
 Tajweed colours come from [quran-tajweed](https://github.com/cpfair/quran-tajweed) (CC BY 4.0), built from the
 Dar al-Maarifah colour-coded mushaf. Its annotations point into the Tanzil text, so `scripts/build-tajweed.mjs` moves

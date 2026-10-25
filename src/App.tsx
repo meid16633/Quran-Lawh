@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BADGES, earned } from './lib/achievements'
 import { badgesEarned, currentProgress, watchedStores } from './lib/progress'
 import { QuranContext } from './lib/context'
+import { applyPeriodic, periodic, periodicAvailable } from './lib/periodic'
 import { loadQuran, type Quran } from './lib/quran'
 import { navigate, useRoute } from './lib/router'
 import { settings, useStore } from './lib/store'
@@ -42,6 +43,28 @@ export function App() {
     const unsubscribe = watchedStores.map((s) => s.subscribe(check))
     return () => unsubscribe.forEach((u) => u())
   }, [])
+
+  // Android: keep the periodic reminders topped up whenever the app comes to the foreground, and open the mushaf on
+  // the ayah of a reminder that was tapped.
+  useEffect(() => {
+    if (!quran || !periodicAvailable()) return
+    const refresh = () => {
+      if (periodic.get().enabled) void applyPeriodic(quran, periodic.get())
+    }
+    refresh()
+    const handles = Promise.all([
+      import('@capacitor/app').then(({ App: CapApp }) => CapApp.addListener('resume', refresh)),
+      import('@capacitor/local-notifications').then(({ LocalNotifications }) =>
+        LocalNotifications.addListener('localNotificationActionPerformed', ({ notification }) => {
+          const ayah = notification.extra?.ayah
+          if (typeof ayah === 'number') navigate(`read/${quran.pageOf(ayah)}?a=${ayah}`)
+        }),
+      ),
+    ])
+    return () => {
+      void handles.then((hs) => hs.forEach((h) => void h.remove()))
+    }
+  }, [quran])
 
   useEffect(() => {
     const root = document.documentElement

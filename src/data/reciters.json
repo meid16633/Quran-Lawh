@@ -1,0 +1,14 @@
+[
+  { "id": "alafasy", "name": "مشاري راشد العفاسي", "folder": "Alafasy_128kbps" },
+  { "id": "husary", "name": "محمود خليل الحصري", "folder": "Husary_128kbps" },
+  { "id": "husary-muallim", "name": "الحصري – المصحف المعلّم", "folder": "Husary_Muallim_128kbps", "note": "يقرأ ويترك مسافة لتردّد خلفه" },
+  { "id": "minshawy", "name": "محمد صديق المنشاوي", "folder": "Minshawy_Murattal_128kbps" },
+  { "id": "abdulbasit", "name": "عبد الباسط عبد الصمد", "folder": "Abdul_Basit_Murattal_192kbps" },
+  { "id": "sudais", "name": "عبد الرحمن السديس", "folder": "Abdurrahmaan_As-Sudais_192kbps" },
+  { "id": "shuraym", "name": "سعود الشريم", "folder": "Saood_ash-Shuraym_128kbps" },
+  { "id": "muaiqly", "name": "ماهر المعيقلي", "folder": "MaherAlMuaiqly128kbps" },
+  { "id": "dussary", "name": "ياسر الدوسري", "folder": "Yasser_Ad-Dussary_128kbps" },
+  { "id": "ayyoub", "name": "محمد أيوب", "folder": "Muhammad_Ayyoub_128kbps" },
+  { "id": "hudhaify", "name": "علي الحذيفي", "folder": "Hudhaify_128kbps" },
+  { "id": "ghamadi", "name": "سعد الغامدي", "folder": "Ghamadi_40kbps" }
+]

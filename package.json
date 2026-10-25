@@ -12,7 +12,8 @@
     "data": "npm install --no-save quran-json@3.1.2 quran-meta@7.0.0 && node scripts/build-data.mjs",
     "verify-text": "node scripts/verify-text.mjs",
     "icons": "node scripts/build-icons.mjs",
-    "android:sync": "npm run build && cap sync android"
+    "android:sync": "npm run build && cap sync android",
+    "check-reciters": "node scripts/check-reciters.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

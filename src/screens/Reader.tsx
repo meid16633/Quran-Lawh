@@ -7,7 +7,19 @@ import { Sheet } from '../components/Sheet'
 import { count, mistakesWord } from '../lib/arabic'
 import { useQuran } from '../lib/context'
 import { dayNumber } from '../lib/dates'
-import { addMistake, gradePage, khatma, markMemorized, memorized, mistakes, pageFinished, removeMistake, unmarkMemorized } from '../lib/hifz'
+import {
+  addMistake,
+  gradePage,
+  khatma,
+  markMemorized,
+  memorized,
+  mistakes,
+  pageFinished,
+  removeMistake,
+  setWirdMark,
+  unmarkMemorized,
+  wirdMark,
+} from '../lib/hifz'
 import { khatmaStatus } from '../lib/khatma'
 import { notes } from '../lib/notes'
 import { player, playerSettings, playerState } from '../lib/player'
@@ -47,6 +59,7 @@ export function Reader({ page, highlight, review }: Props) {
   const [sharing, setSharing] = useState<number | null>(null)
   const [similar, setSimilar] = useState<SimilarData | null>(null)
   const noteMap = useStore(notes)
+  const mark = useStore(wirdMark)
   const pageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -59,7 +72,7 @@ export function Reader({ page, highlight, review }: Props) {
 
   const goTo = (p: number) => {
     if (p < 1 || p > q.pageCount) return
-    if (p === page + 1) pageFinished(page)
+    if (p === page + 1) pageFinished(page, q.pageRange(p)[0])
     navigate(`read/${p}${suffix}`, { replace: true })
   }
 
@@ -188,6 +201,11 @@ export function Reader({ page, highlight, review }: Props) {
           if (!pen) setSelected(selected === i ? null : i)
         }}
       >
+        {mark?.ayah === i && (
+          <span className="wird-ribbon" title="علامة الورد" aria-label="علامة الورد">
+            <Icon name="flag" size={20} />
+          </span>
+        )}
         {ws.map((w, k) => {
           const key = wordKey(i, k)
           const m = mistakeMap[key]
@@ -269,7 +287,7 @@ export function Reader({ page, highlight, review }: Props) {
               className="button wide wird-done"
               onClick={(e) => {
                 e.stopPropagation()
-                pageFinished(page)
+                pageFinished(page, page < q.pageCount ? q.pageRange(page + 1)[0] : null)
                 showToast(page === q.pageCount ? 'ختمت القرآن، تقبّل الله منك' : 'أتممت ورد اليوم، بارك الله فيك')
               }}
             >
@@ -289,6 +307,11 @@ export function Reader({ page, highlight, review }: Props) {
             onToast={showToast}
             onStudy={(tab) => setStudy({ index: selected, tab })}
             onImage={() => setSharing(selected)}
+            onWirdMark={() => {
+              setWirdMark(selected, page)
+              setSelected(null)
+              showToast(plan ? 'وُضعت علامة الورد هنا، وستكمل ختمتك منها' : 'وُضعت علامة الورد هنا')
+            }}
           />
         ) : (
           <>
@@ -460,12 +483,14 @@ interface AyahActionsProps {
   onToast: (m: string) => void
   onStudy: (tab: StudyTab) => void
   onImage: () => void
+  onWirdMark: () => void
 }
 
-function AyahActions({ index, similar, onClose, onToast, onStudy, onImage }: AyahActionsProps) {
+function AyahActions({ index, similar, onClose, onToast, onStudy, onImage, onWirdMark }: AyahActionsProps) {
   const q = useQuran()
   const marks = useStore(bookmarks)
   const noteMap = useStore(notes)
+  const mark = useStore(wirdMark)
   const marked = marks.some((b) => b.i === index)
   const surah = q.surahs[q.surahOf(index)]
   const ref = `${surah.name} • آية ${arabicDigits(q.ayahNo(index))}`
@@ -532,6 +557,10 @@ function AyahActions({ index, similar, onClose, onToast, onStudy, onImage }: Aya
         >
           <Icon name={marked ? 'bookmarkFilled' : 'bookmark'} />
           <span>{marked ? 'إزالة' : 'علامة'}</span>
+        </button>
+        <button className={'sheet-button' + (mark?.ayah === index ? ' active' : '')} onClick={onWirdMark}>
+          <Icon name="flag" />
+          <span>علامة الورد</span>
         </button>
         <button className="sheet-button" onClick={onImage}>
           <Icon name="image" />

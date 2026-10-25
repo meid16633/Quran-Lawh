@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { dayNumber, streak } from './dates'
-import { khatmaStatus } from './khatma'
+import { khatmaStatus, pagesForDays, planLength } from './khatma'
 import { isDue, newCard, review, strength, suggestGrade } from './srs'
 import { firstLetter, words } from './words'
 
@@ -77,6 +77,32 @@ describe('spaced repetition', () => {
   })
 })
 
+describe('khatma by pages per day', () => {
+  it('works out the length and finish day', () => {
+    expect(planLength(1, 3)).toBe(202)
+    expect(planLength(1, 20)).toBe(31)
+    expect(planLength(500, 5)).toBe(21)
+    expect(pagesForDays(1, 30)).toBe(21)
+    const s = khatmaStatus({ start: 1000, pagesPerDay: 3, from: 1, progress: 0 }, 1000)
+    expect([s.from, s.to, s.totalDays, s.finishDay]).toEqual([1, 3, 202, 1201])
+  })
+
+  it('re-plans from the current page without losing the percentage', () => {
+    const s = khatmaStatus({ start: 50, pagesPerDay: 10, from: 1, progress: 302, startProgress: 302 }, 50)
+    expect([s.from, s.to, s.totalDays]).toEqual([303, 312, 31])
+    expect(s.percent).toBe(50)
+    expect(s.doneToday).toBe(false)
+  })
+
+  it('can start in the middle of the mushaf', () => {
+    const s = khatmaStatus({ start: 0, pagesPerDay: 5, from: 500, progress: 499 }, 1)
+    expect([s.from, s.to]).toEqual([500, 509])
+    expect(s.behind).toBe(5)
+    expect(s.percent).toBe(0)
+    expect(khatmaStatus({ start: 0, pagesPerDay: 5, from: 500, progress: 552 }, 1).percent).toBe(50)
+  })
+})
+
 describe('khatma', () => {
   it('splits the mushaf into daily portions', () => {
     const s = khatmaStatus({ start: 100, days: 30, progress: 0 }, 100)
@@ -94,5 +120,14 @@ describe('khatma', () => {
     expect(done.finished).toBe(true)
     expect(done.percent).toBe(100)
     expect(done.to).toBe(604)
+  })
+})
+
+describe('calendar days', () => {
+  it('maps day numbers back to local dates', async () => {
+    const { dateOfDay, dayNumber } = await import('./dates')
+    const d = new Date(2027, 4, 14, 15, 30)
+    const back = dateOfDay(dayNumber(d))
+    expect([back.getFullYear(), back.getMonth(), back.getDate()]).toEqual([2027, 4, 14])
   })
 })

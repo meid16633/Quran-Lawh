@@ -33,7 +33,11 @@
 - A map of all 604 pages coloured by how firmly each one is memorized, and a list of your most frequent mistakes
 
 **Daily wird and khatma (الورد)**
-- Plan a khatma over 7–60 days; today's portion is computed automatically and tracked as you read
+- Plan a khatma by pages per day (e.g. 3 pages → 202 days) or by length, from any page; the app shows the
+  finish date (Gregorian and Hijri), tracks today's portion as you read, and can re-plan mid-khatma
+- A wird bookmark (علامة الورد), separate from the last page opened: it moves forward as you read and can be
+  placed on any ayah; the home screen continues the wird, not the last lookup
+- A daily reminder at a chosen time: a notification in the Android app, or a repeating calendar event on iPhone
 - Streak of active days and a weekly chart of pages read and reviewed
 
 **Study (التدبر والفهم)**

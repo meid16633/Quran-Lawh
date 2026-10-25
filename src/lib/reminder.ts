@@ -1,4 +1,7 @@
 import { Capacitor } from '@capacitor/core'
+import { count, pagesWord } from './arabic'
+import { khatma } from './hifz'
+import { planPagesPerDay } from './khatma'
 import { createStore } from './store'
 
 export interface Reminder {
@@ -29,7 +32,7 @@ export async function applyReminder(r: Reminder): Promise<boolean> {
       {
         id: ID,
         title: 'لوح',
-        body: 'حان وقت وردك اليومي ومراجعة محفوظك',
+        body: reminderText(),
         schedule: { on: { hour, minute }, allowWhileIdle: true },
         smallIcon: 'ic_stat_lawh',
         iconColor: '#1F6B52',
@@ -39,4 +42,12 @@ export async function applyReminder(r: Reminder): Promise<boolean> {
     ],
   })
   return true
+}
+
+/** The reminder's text: today's khatma portion when there is a khatma. */
+export function reminderText(): string {
+  const plan = khatma.get()
+  return plan
+    ? `حان وقت وردك: ${count(planPagesPerDay(plan), pagesWord)} من ختمتك`
+    : 'حان وقت وردك اليومي ومراجعة محفوظك'
 }

@@ -1,16 +1,20 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
+import { AyahStudy, type StudyTab } from '../components/AyahStudy'
 import { Icon } from '../components/Icon'
 import { PlayerBar } from '../components/PlayerBar'
+import { ShareImage } from '../components/ShareImage'
 import { Sheet } from '../components/Sheet'
 import { count, mistakesWord } from '../lib/arabic'
 import { useQuran } from '../lib/context'
 import { dayNumber } from '../lib/dates'
 import { addMistake, gradePage, khatma, markMemorized, memorized, mistakes, pageFinished, removeMistake, unmarkMemorized } from '../lib/hifz'
 import { khatmaStatus } from '../lib/khatma'
+import { notes } from '../lib/notes'
 import { player, playerSettings, playerState } from '../lib/player'
 import { arabicDigits } from '../lib/quran'
 import { back, navigate } from '../lib/router'
 import { type Grade, suggestGrade } from '../lib/srs'
+import { type SimilarData, loadSimilar } from '../lib/study'
 import { bookmarks, createMemoryStore, lastRead, readerPrefs, toggleBookmark, useStore } from '../lib/store'
 import { firstLetter, wordKey, words } from '../lib/words'
 
@@ -39,7 +43,15 @@ export function Reader({ page, highlight, review }: Props) {
   const [pen, setPen] = useState(false)
   const [marks, setMarks] = useState<Set<string>>(() => new Set())
   const [grading, setGrading] = useState(false)
+  const [study, setStudy] = useState<{ index: number; tab: StudyTab } | null>(null)
+  const [sharing, setSharing] = useState<number | null>(null)
+  const [similar, setSimilar] = useState<SimilarData | null>(null)
+  const noteMap = useStore(notes)
   const pageRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    loadSimilar().then(setSimilar, () => {})
+  }, [])
 
   const mode = prefs.hifz
   const playing = pstate.status !== 'idle' && pstate.pos && !pstate.pos.basmala ? pstate.pos.i : null
@@ -198,8 +210,8 @@ export function Reader({ page, highlight, review }: Props) {
           )
         })}
         {/* A no-break space keeps the ayah number on the same line as the last word. */}
-        {' '}
-        <span className="ayah-num">{arabicDigits(n)}</span>{' '}
+        {'\u00A0'}
+        <span className={'ayah-num' + (noteMap[i] ? ' noted' : '')}>{arabicDigits(n)}</span>{' '}
       </span>,
     )
   }
@@ -270,7 +282,14 @@ export function Reader({ page, highlight, review }: Props) {
 
       <div className="bottom-stack" onClick={(e) => e.stopPropagation()}>
         {selected !== null ? (
-          <AyahActions index={selected} onClose={() => setSelected(null)} onToast={showToast} />
+          <AyahActions
+            index={selected}
+            similar={similar?.[selected]?.length ?? 0}
+            onClose={() => setSelected(null)}
+            onToast={showToast}
+            onStudy={(tab) => setStudy({ index: selected, tab })}
+            onImage={() => setSharing(selected)}
+          />
         ) : (
           <>
             {mode !== 'off' && (
@@ -318,6 +337,8 @@ export function Reader({ page, highlight, review }: Props) {
         )}
       </div>
 
+      {study && <AyahStudy index={study.index} tab={study.tab} onClose={() => setStudy(null)} />}
+      {sharing !== null && <ShareImage index={sharing} onClose={() => setSharing(null)} />}
       {grading && <GradeSheet page={page} mistakes={marks.size} onClose={() => setGrading(false)} />}
       {toast && <div className="toast">{toast}</div>}
     </div>
@@ -432,9 +453,19 @@ function GradeSheet({ page, mistakes: n, onClose }: { page: number; mistakes: nu
   )
 }
 
-function AyahActions({ index, onClose, onToast }: { index: number; onClose: () => void; onToast: (m: string) => void }) {
+interface AyahActionsProps {
+  index: number
+  similar: number
+  onClose: () => void
+  onToast: (m: string) => void
+  onStudy: (tab: StudyTab) => void
+  onImage: () => void
+}
+
+function AyahActions({ index, similar, onClose, onToast, onStudy, onImage }: AyahActionsProps) {
   const q = useQuran()
   const marks = useStore(bookmarks)
+  const noteMap = useStore(notes)
   const marked = marks.some((b) => b.i === index)
   const surah = q.surahs[q.surahOf(index)]
   const ref = `${surah.name} • آية ${arabicDigits(q.ayahNo(index))}`
@@ -462,8 +493,13 @@ function AyahActions({ index, onClose, onToast }: { index: number; onClose: () =
 
   return (
     <div className="sheet">
-      <div className="sheet-title">{ref}</div>
-      <div className="sheet-actions five">
+      <div className="sheet-head">
+        <div className="sheet-title">{ref}</div>
+        <button className="icon-button" aria-label="إغلاق" onClick={onClose}>
+          <Icon name="close" size={20} />
+        </button>
+      </div>
+      <div className="sheet-actions">
         <button
           className="sheet-button"
           onClick={() => {
@@ -473,6 +509,19 @@ function AyahActions({ index, onClose, onToast }: { index: number; onClose: () =
         >
           <Icon name="play" />
           <span>استماع</span>
+        </button>
+        <button className="sheet-button" onClick={() => onStudy('tafsir')}>
+          <Icon name="book" />
+          <span>تفسير</span>
+        </button>
+        <button className={'sheet-button' + (similar ? ' badge-host' : '')} onClick={() => onStudy('similar')}>
+          <Icon name="layers" />
+          <span>متشابهات</span>
+          {similar > 0 && <b className="count">{arabicDigits(similar)}</b>}
+        </button>
+        <button className={'sheet-button' + (noteMap[index] ? ' active' : '')} onClick={() => onStudy('note')}>
+          <Icon name="pen" />
+          <span>تدبّر</span>
         </button>
         <button
           className={'sheet-button' + (marked ? ' active' : '')}
@@ -484,6 +533,10 @@ function AyahActions({ index, onClose, onToast }: { index: number; onClose: () =
           <Icon name={marked ? 'bookmarkFilled' : 'bookmark'} />
           <span>{marked ? 'إزالة' : 'علامة'}</span>
         </button>
+        <button className="sheet-button" onClick={onImage}>
+          <Icon name="image" />
+          <span>صورة</span>
+        </button>
         <button className="sheet-button" onClick={copy}>
           <Icon name="copy" />
           <span>نسخ</span>
@@ -491,10 +544,6 @@ function AyahActions({ index, onClose, onToast }: { index: number; onClose: () =
         <button className="sheet-button" onClick={share}>
           <Icon name="share" />
           <span>مشاركة</span>
-        </button>
-        <button className="sheet-button" onClick={onClose}>
-          <Icon name="close" />
-          <span>إغلاق</span>
         </button>
       </div>
     </div>

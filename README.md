@@ -51,18 +51,22 @@ Both are built automatically from `main` by GitHub Actions.
 
 ## Text source and accuracy
 
-The verse text is the Uthmani text of the **King Fahd Glorious Qur'an Printing Complex**, as published by
-[The Noble Qur'an Encyclopedia](https://quranenc.com) and packaged by
-[quran-json](https://github.com/risan/quran-json) (CC BY-SA 4.0). It is copied byte-for-byte by
-`scripts/build-data.mjs` and never edited.
+The verse text and the Quran font are the official **King Fahd Glorious Qur'an Printing Complex** release,
+*Uthmanic Hafs* version 18 ([qurancomplex.gov.sa](https://qurancomplex.gov.sa/en/techquran/dev/)), as mirrored in
+[quran-data-kfgqpc](https://github.com/thetruetruth/quran-data-kfgqpc). `scripts/build-data.mjs` copies it as
+published (only the trailing ayah number is removed) and fails the build if any ayah's letters differ from a
+second, independent copy of the King Fahd text ([quran-json](https://github.com/risan/quran-json), via
+quranenc.com). Page and juz numbers of the Madinah mushaf come from the same release.
 
-Before release, every one of the 6236 verses was compared automatically, letter by letter, with the independent
-[Tanzil](https://tanzil.net) Uthmani text. All verses match, apart from known differences in how the two sources
-encode hamza and join a few words (for example بَعۡدَمَا / بَعۡدَ مَا).
-A unit test pins a SHA-256 checksum of the text so any accidental change fails CI.
+The text was also compared, letter by letter, with the independent [Tanzil](https://tanzil.net) Uthmani text:
+all 6236 verses match apart from known differences in hamza spelling and in how a few words are joined
+(for example بَعۡدَمَا / بَعۡدَ مَا). A unit test pins a SHA-256 checksum of the text so any accidental change
+fails CI.
 
-Page, juz and hizb boundaries come from [quran-meta](https://github.com/quran-center/quran-meta) (MIT).
-The Quran font is *KFGQPC Uthmanic Script HAFS* © King Fahd Glorious Qur'an Printing Complex.
+Tafsir al-Muyassar and *al-Muyassar fi Gharib al-Qur'an* (word meanings) are from the King Fahd Complex, via
+Tarteel's Quranic Universal Library as packaged in [tafsir_api](https://github.com/spa5k/tafsir_api)
+(`scripts/build-tafsir.mjs`). Similar verses (المتشابهات) are computed from the text by
+`scripts/build-similar.mjs`. Hizb quarters and sajdas come from [quran-meta](https://github.com/quran-center/quran-meta) (MIT).
 
 ## Development
 
@@ -89,5 +93,5 @@ installed after uninstalling the previous one.
 ## License
 
 The app's source code is released under the [MIT License](LICENSE).
-Third-party content keeps its own terms: the Quran text data in `public/data/quran.json` is from quran-json
-(CC BY-SA 4.0), and the Quran font in `src/assets/fonts/` is © King Fahd Glorious Qur'an Printing Complex.
+Third-party content keeps its own terms: the Quran text, tafsir and font are © King Fahd Glorious Qur'an
+Printing Complex; quran-meta is MIT; tafsir_api is MIT.

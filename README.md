@@ -62,3 +62,9 @@ CI signs the APK with the keystore in these repository secrets, if present:
 `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
 Without them it falls back to a temporary debug key, which is fine for testing but means each new build has to be
 installed after uninstalling the previous one.
+
+## License
+
+The app's source code is released under the [MIT License](LICENSE).
+Third-party content keeps its own terms: the Quran text data in `public/data/quran.json` is from quran-json
+(CC BY-SA 4.0), and the Quran font in `src/assets/fonts/` is © King Fahd Glorious Qur'an Printing Complex.

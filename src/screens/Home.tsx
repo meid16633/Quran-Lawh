@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import { Icon } from '../components/Icon'
+import { TabLayout } from '../components/TabLayout'
+import { TopBar } from '../components/TopBar'
 import { useQuran } from '../lib/context'
+import { dayNumber } from '../lib/dates'
+import { khatma, memorized } from '../lib/hifz'
+import { khatmaStatus } from '../lib/khatma'
 import { arabicDigits } from '../lib/quran'
 import { navigate } from '../lib/router'
+import { isDue } from '../lib/srs'
 import { bookmarks, lastRead, toggleBookmark, useStore } from '../lib/store'
 
 type Tab = 'surahs' | 'juz' | 'bookmarks'
@@ -31,22 +37,15 @@ export function Home() {
   }
 
   return (
-    <div className="screen">
-      <header className="topbar">
-        <div className="brand">
-          <span className="logo">لَوْح</span>
-          <span className="tagline">احفظ وراجع</span>
-        </div>
-        <button className="icon-button" aria-label="بحث" onClick={() => navigate('search')}>
-          <Icon name="search" />
-        </button>
-        <button className="icon-button" aria-label="الإعدادات" onClick={() => navigate('settings')}>
-          <Icon name="settings" />
-        </button>
-      </header>
+    <TabLayout tab="mushaf">
+      <TopBar>
+        <span className="logo">لَوْح</span>
+        <span className="tagline">احفظ وراجع</span>
+      </TopBar>
 
       <main className="content">
         <ContinueCard />
+        <TodayCards />
         <GoToPage />
 
         <div className="tabs" role="tablist">
@@ -67,6 +66,39 @@ export function Home() {
         {tab === 'juz' && <JuzList />}
         {tab === 'bookmarks' && <BookmarkList />}
       </main>
+    </TabLayout>
+  )
+}
+
+/** Today's wird and review at a glance, linking to their tabs. */
+function TodayCards() {
+  const plan = useStore(khatma)
+  const memo = useStore(memorized)
+  const today = dayNumber()
+  const due = Object.values(memo).filter((c) => isDue(c, today)).length
+  const wird = plan ? khatmaStatus(plan, today) : null
+  return (
+    <div className="today">
+      <button className="card mini" onClick={() => navigate('wird')}>
+        <Icon name="calendar" />
+        <span className="mini-title">ورد اليوم</span>
+        <span className="mini-sub">
+          {!wird
+            ? 'خطط لختمتك'
+            : wird.finished
+              ? 'ختمت، ما شاء الله'
+              : wird.doneToday
+                ? 'أتممته ✓'
+                : `${arabicDigits(wird.to - wird.from + 1)} صفحة متبقية`}
+        </span>
+      </button>
+      <button className="card mini" onClick={() => navigate('hifz')}>
+        <Icon name="cap" />
+        <span className="mini-title">مراجعة اليوم</span>
+        <span className="mini-sub">
+          {Object.keys(memo).length === 0 ? 'سجّل ما تحفظه' : due === 0 ? 'لا شيء اليوم ✓' : `${arabicDigits(due)} صفحة`}
+        </span>
+      </button>
     </div>
   )
 }

@@ -37,6 +37,23 @@ export function createStore<T>(key: string, initial: T): Store<T> {
   }
 }
 
+/** Same interface as createStore, kept in memory only. */
+export function createMemoryStore<T>(initial: T): Store<T> {
+  let value = initial
+  const listeners = new Set<() => void>()
+  return {
+    get: () => value,
+    set(next) {
+      value = typeof next === 'function' ? (next as (prev: T) => T)(value) : next
+      listeners.forEach((l) => l())
+    },
+    subscribe(listener) {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+  }
+}
+
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
 }
@@ -62,6 +79,17 @@ export interface LastRead {
   page: number
   at: number
 }
+
+export type HifzMode = 'off' | 'hide' | 'first'
+
+export interface ReaderPrefs {
+  hifz: HifzMode
+  /** Mode to return to when memorization is switched back on. */
+  lastHifz: Exclude<HifzMode, 'off'>
+  showMistakes: boolean
+}
+
+export const readerPrefs = createStore<ReaderPrefs>('lawh:reader', { hifz: 'off', lastHifz: 'hide', showMistakes: true })
 
 export const settings = createStore<Settings>('lawh:settings', { theme: 'auto', fontSize: 26 })
 export const bookmarks = createStore<Bookmark[]>('lawh:bookmarks', [])

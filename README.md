@@ -6,16 +6,39 @@
 - **Android** – as an APK you install directly
 - any desktop browser
 
-## Features (phase 1)
+## Features
 
+**Reading**
 - The Madinah mushaf text in Uthmani script with the King Fahd Complex Hafs font
 - Navigation by the 604 Madinah mushaf pages, with surah openings, basmala, juz and hizb-quarter
 - Swipe between pages (swipe right for the next page, like a printed mushaf)
 - Surah and juz index, "go to page", and continue from where you stopped
 - Search without diacritics, in modern spelling (الصلاة finds ٱلصَّلَوٰة), by surah name, or by reference (`2:255`, `البقرة ٢٥٥`)
-- Tap an ayah to bookmark, copy or share it
-- Light, paper and night themes, adjustable Quran font size
-- Works offline after the first visit
+- Tap an ayah to listen from it, bookmark, copy or share it
+- Light, paper and night themes, adjustable Quran font size; works offline
+
+**Listening** (12 reciters from [EveryAyah](https://everyayah.com), including Al-Husary's teaching recitation)
+- Follow-along: the recited ayah is highlighted and pages turn by themselves
+- Repeat each ayah and/or the whole passage (1–10 times or forever), stop at the end of the page, surah or juz
+- A pause after every ayah to repeat it yourself, and playback speed
+- Lock-screen controls through the Media Session API
+
+**Memorization (الحفظ)**
+- Memorization mode in the mushaf: hide the words, or show only the start of each word, keeping the page layout
+- Reveal word by word or ayah by ayah, or tap a word to peek at it
+- Mistake pen: tap the words you get wrong while reciting; they are remembered and tinted in the mushaf
+- Mark pages as memorized (or add whole surahs, juz or page ranges)
+- Daily review with spaced repetition: each memorized page comes back just before you would forget it,
+  and you grade how the review went (forgot / hard / good / easy)
+- A map of all 604 pages coloured by how firmly each one is memorized, and a list of your most frequent mistakes
+
+**Daily wird and khatma (الورد)**
+- Plan a khatma over 7–60 days; today's portion is computed automatically and tracked as you read
+- Streak of active days and a weekly chart of pages read and reviewed
+
+**Your data**
+- Everything stays on the device; no account, no tracking
+- Backup and restore as a file (or copied text) to move to another phone
 
 ## Get the app
 

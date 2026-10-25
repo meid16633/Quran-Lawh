@@ -25,9 +25,12 @@ describe('words', () => {
 
   it('takes the first letter with its marks', () => {
     expect(firstLetter('بِسۡمِ')).toBe('بِـ')
-    expect(firstLetter('ٱلرَّحِيمِ')).toBe('ٱ')
-    expect(firstLetter('وَمَا')).toBe('وَ')
-    expect(firstLetter('۞وَإِذۡ')).toBe('وَ')
+    expect(firstLetter('ٱلرَّحِيمِ')).toBe('ٱلرَّ')
+    expect(firstLetter('ٱلنَّبَإِ')).toBe('ٱلنَّـ')
+    expect(firstLetter('وَٱلۡجِبَالَ')).toBe('وَٱلۡجِـ')
+    expect(firstLetter('وَمَا')).toBe('وَمَـ')
+    expect(firstLetter('۞وَإِذۡ')).toBe('وَإِ')
+    expect(firstLetter('فِي')).toBe('فِي')
     expect(firstLetter('قَ')).toBe('قَ')
   })
 })

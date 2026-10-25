@@ -11,6 +11,8 @@ export interface QuranData {
   surahs: Surah[]
   /** Verse text, all 6236 ayahs in mushaf order. Indexes into this array are "ayah indexes". */
   text: string[]
+  /** The same verses in modern (إملائي) spelling, without diacritics, for search. */
+  plain: string[]
   /** First ayah index of each page / juz / hizb quarter. */
   pages: number[]
   juz: number[]
@@ -33,12 +35,14 @@ function floorIndex(sorted: number[], value: number): number {
 export class Quran {
   readonly surahs: Surah[]
   readonly text: string[]
+  readonly plain: string[]
   readonly surahStarts: number[]
   readonly pageCount: number
 
   constructor(private readonly data: QuranData) {
     this.surahs = data.surahs
     this.text = data.text
+    this.plain = data.plain
     this.pageCount = data.pages.length
     let start = 0
     this.surahStarts = data.surahs.map((s) => {

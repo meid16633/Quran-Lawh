@@ -1,8 +1,8 @@
 import type { Quran } from './quran'
 
 // Quranic annotation marks, harakat, small high letters, tatweel and the odd thin space.
-const MARKS = /[ؐ-ًؚ-ٟۖ-ۭـ ]/g
-const DAGGER_ALEF = 'ٰ'
+const MARKS = /[\u0610-\u061A\u064B-\u065F\u06D6-\u06ED\u0640\u2009]/g
+const DAGGER_ALEF = '\u0670'
 
 /** Reduce Arabic text to bare letters so the user can search without diacritics. */
 export function normalize(text: string): string {
@@ -17,18 +17,22 @@ export function normalize(text: string): string {
     .replace(/[^ء-ي ]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
+    // The vocative is written joined in the mushaf's modern text ("ياأيها"); treat "يا أيها" the same.
+    .replace(/(^| )يا (?=\S)/g, '$1يا')
 }
 
 /**
  * Uthmani spelling writes some long vowels with a dagger alef (ٱلصَّلَوٰة, ٱلسَّمَٰوَٰت, عَلَىٰ).
- * People type the modern spelling, so each verse is indexed in up to three readings of it.
+ * People type the modern spelling, so each verse is indexed in several readings of it, including the
+ * modern (إملائي) text published with the mushaf.
  */
-export function searchForms(verse: string): string[] {
+export function searchForms(verse: string, plain = ''): string[] {
   const forms = [normalize(verse.replaceAll(DAGGER_ALEF, ''))]
+  if (plain) forms.push(normalize(plain))
   if (verse.includes(DAGGER_ALEF)) {
     const bare = verse.replace(MARKS, '')
     forms.push(normalize(bare.replaceAll(DAGGER_ALEF, 'ا')))
-    forms.push(normalize(bare.replace(/[وى]ٰ/g, 'ا').replaceAll(DAGGER_ALEF, 'ا')))
+    forms.push(normalize(bare.replace(/[وى]\u0670/g, 'ا').replaceAll(DAGGER_ALEF, 'ا')))
   }
   return [...new Set(forms)]
 }
@@ -38,7 +42,7 @@ export class SearchIndex {
   private readonly surahNames: string[]
 
   constructor(private readonly quran: Quran) {
-    this.forms = quran.text.map(searchForms)
+    this.forms = quran.text.map((t, i) => searchForms(t, quran.plain[i]))
     this.surahNames = quran.surahs.map((s) => normalize(s.name))
   }
 

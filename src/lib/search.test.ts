@@ -25,6 +25,11 @@ describe('SearchIndex', () => {
     expect(hits('الكتاب')).toContain(q.indexOf(2, 2))
   })
 
+  it('finds words through the modern spelling of the mushaf', () => {
+    expect(hits('يا أيها الذين آمنوا')).toContain(q.indexOf(2, 104))
+    expect(hits('الحياة الدنيا')).toContain(q.indexOf(2, 86))
+  })
+
   it('finds words typed with diacritics', () => {
     expect(hits('ٱلْحَمْدُ لِلَّهِ')).toContain(q.indexOf(1, 2))
   })

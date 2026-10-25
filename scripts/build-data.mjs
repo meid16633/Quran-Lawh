@@ -1,58 +1,96 @@
-// Builds public/data/quran.json from pinned npm packages:
-// - quran-json: Uthmani text of the King Fahd Glorious Quran Printing Complex (via quranenc.com)
-// - quran-meta: Madinah mushaf page, juz, hizb and sajda boundaries (Hafs)
-// The verse text is copied byte-for-byte; nothing is edited.
-// Run with `npm run data`, which installs those exact versions without adding them to package.json.
+// Builds public/data/quran.json from the official King Fahd Glorious Qur'an Printing Complex release
+// (Uthmanic Hafs v18, https://qurancomplex.gov.sa/en/techquran/dev/), as mirrored with its font in
+// https://github.com/thetruetruth/quran-data-kfgqpc, pinned to the commit below:
+//
+//   git clone --filter=blob:none --no-checkout https://github.com/thetruetruth/quran-data-kfgqpc /tmp/kfgqpc
+//   git -C /tmp/kfgqpc checkout 281dbbe8eed1370daa5a023b6cd81655cbfd6473 -- hafs
+//   npm run data -- /tmp/kfgqpc
+//
+// The verse text is copied as published; only the trailing ayah number is removed (the app adds it).
+// As a safeguard every ayah is compared, letter by letter, with the independent copy of the King Fahd
+// text in quran-json (via quranenc.com), and the build fails on any difference in letters.
+// Page and juz numbers come from the release; hizb quarters and sajdas from quran-meta.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { HizbQuarterList, JuzList, PageList, SajdaList, SurahList, meta } from 'quran-meta/hafs'
+import { join } from 'node:path'
+import { HizbQuarterList, SajdaList, SurahList, meta } from 'quran-meta/hafs'
 
-const require = createRequire(import.meta.url)
-const chapters = JSON.parse(readFileSync(require.resolve('quran-json/dist/quran.json'), 'utf8'))
+export const COMMIT = '281dbbe8eed1370daa5a023b6cd81655cbfd6473'
 
+const root = process.argv[2]
+if (!root) {
+  console.error('usage: npm run data -- <path to quran-data-kfgqpc checkout>')
+  process.exit(1)
+}
 const fail = (msg) => {
   console.error(msg)
   process.exit(1)
 }
 
-if (chapters.length !== meta.numSurahs) fail(`expected ${meta.numSurahs} surahs, got ${chapters.length}`)
+const rows = JSON.parse(readFileSync(join(root, 'hafs/data/hafsData_v18.json'), 'utf8'))
+const require = createRequire(import.meta.url)
+const check = JSON.parse(readFileSync(require.resolve('quran-json/dist/quran.json'), 'utf8')).flatMap((s) =>
+  s.verses.map((v) => v.text),
+)
+
+if (rows.length !== meta.numAyahs) fail(`expected ${meta.numAyahs} ayahs, got ${rows.length}`)
+
+// Letters only: no marks, tatweel, spaces or hamza spelling, for comparing two encodings of one text.
+const letters = (t) =>
+  t
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640ء\u2009\u00A0 ]/g, '')
+    .replace(/[ٱأإآ]/g, 'ا')
+    .replace(/[٠-٩\u06DE\u06E9]/g, '')
 
 const surahs = []
 const text = []
-chapters.forEach((ch, i) => {
-  const [start, count, , , , isMeccan] = SurahList[i + 1]
-  if (ch.id !== i + 1) fail(`surah ${i + 1} out of order`)
-  if (ch.verses.length !== count || ch.total_verses !== count) fail(`surah ${ch.id}: verse count mismatch`)
-  if (text.length + 1 !== start) fail(`surah ${ch.id}: start ayah mismatch`)
-  ch.verses.forEach((v, j) => {
-    if (v.id !== j + 1) fail(`${ch.id}:${j + 1} out of order`)
-    text.push(v.text)
-  })
-  surahs.push({ name: ch.name, tname: ch.transliteration, meccan: isMeccan, ayahs: count })
+const plain = []
+const pages = []
+const juz = []
+rows.forEach((r, i) => {
+  if (r.id !== i + 1) fail(`row ${i + 1} out of order`)
+  const s = r.sora
+  if (r.aya_no === 1) {
+    const [start, count, , , , isMeccan] = SurahList[s]
+    if (start !== i + 1) fail(`surah ${s} starts at the wrong ayah`)
+    surahs.push({ name: r.sora_name_ar, tname: r.sora_name_en, meccan: isMeccan, ayahs: count })
+  }
+  const t = r.aya_text.replace(/\u00A0?[٠-٩]+$/, '').trim()
+  if (letters(t) !== letters(check[i])) fail(`${s}:${r.aya_no} differs from the reference text`)
+  text.push(t)
+  plain.push(r.aya_text_emlaey.trim())
+  if (r.page !== pages.length) {
+    if (r.page !== pages.length + 1) fail(`page ${r.page} out of order`)
+    pages.push(i)
+  }
+  if (r.jozz !== juz.length) {
+    if (r.jozz !== juz.length + 1) fail(`juz ${r.jozz} out of order`)
+    juz.push(i)
+  }
 })
-if (text.length !== meta.numAyahs) fail(`expected ${meta.numAyahs} ayahs, got ${text.length}`)
-
-// quran-meta lists are 1-based ayah ids with a leading placeholder and a trailing sentinel;
-// store them as 0-based indexes into `text`.
-const starts = (list, n) => {
-  const out = list.slice(1, n + 1).map((id) => id - 1)
-  if (out.length !== n) fail('boundary list has the wrong length')
-  return out
+if (surahs.length !== meta.numSurahs || pages.length !== meta.numPages || juz.length !== meta.numJuzs) {
+  fail(`got ${surahs.length} surahs, ${pages.length} pages, ${juz.length} juz`)
 }
 
+// quran-meta lists are 1-based ayah ids with a leading placeholder; a juz always starts a hizb quarter,
+// so the eight quarters of each juz are aligned with the release's juz starts.
+const hizbQuarters = HizbQuarterList.slice(1, meta.numRubAlHizbs + 1).map((id) => id - 1)
+juz.forEach((start, j) => (hizbQuarters[j * 8] = start))
+
 const data = {
-  version: 1,
+  version: 2,
   source: {
-    text: "Uthmani text of the King Fahd Glorious Qur'an Printing Complex, via The Noble Qur'an Encyclopedia (quranenc.com), packaged by quran-json (CC BY-SA 4.0, Risan Bagja Pradana)",
-    meta: 'Page, juz and hizb boundaries from quran-meta (MIT)',
+    text: "King Fahd Glorious Qur'an Printing Complex, Uthmanic Hafs v18 (qurancomplex.gov.sa)",
+    meta: 'Pages and juz from the same release; hizb quarters and sajdas from quran-meta (MIT)',
   },
   surahs,
   text,
-  pages: starts(PageList, meta.numPages),
-  juz: starts(JuzList, meta.numJuzs),
-  hizbQuarters: starts(HizbQuarterList, meta.numRubAlHizbs),
+  plain,
+  pages,
+  juz,
+  hizbQuarters,
   sajdas: SajdaList.map((id) => id - 1),
 }
 
 writeFileSync(new URL('../public/data/quran.json', import.meta.url), JSON.stringify(data))
-console.log(`wrote ${text.length} ayahs, ${surahs.length} surahs, ${data.pages.length} pages`)
+console.log(`wrote ${text.length} ayahs, ${surahs.length} surahs, ${pages.length} pages; all ayahs match the reference letters`)

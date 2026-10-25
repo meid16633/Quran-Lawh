@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Hafs';
-  src: url('./assets/fonts/kfgqpc-uthmanic-hafs.otf') format('opentype');
+  src: url('./assets/fonts/kfgqpc-hafs-v18.woff2') format('woff2');
   font-display: block;
 }
 
@@ -1572,4 +1572,201 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 10px;
   direction: ltr;
+}
+
+/* ---------- phase 3 ---------- */
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -6px 0 6px;
+}
+
+.sheet-head .sheet-title {
+  margin: 0;
+  padding-inline-start: 8px;
+}
+
+.sheet-actions {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.sheet-button {
+  position: relative;
+}
+
+.sheet-button .count {
+  position: absolute;
+  top: 4px;
+  inset-inline-end: 14px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--gold);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.ayah-num.noted {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 6px;
+}
+
+.study-ayah {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.study-ayah p {
+  flex: 1;
+  margin: 0;
+  max-height: 30vh;
+  overflow-y: auto;
+  font-size: 24px;
+  line-height: 2;
+  text-align: center;
+}
+
+.study-tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.study-tabs .chip {
+  flex: none;
+}
+
+.study-text p {
+  margin: 0 0 10px;
+  font-size: 17px;
+  line-height: 2;
+}
+
+.meanings {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.meanings dt {
+  font-size: 22px;
+  color: var(--accent);
+  line-height: 1.8;
+}
+
+.meanings dd {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.similar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.similar-list li + li {
+  border-top: 1px solid var(--border);
+}
+
+.similar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 0;
+}
+
+.similar-text {
+  font-size: 21px;
+  line-height: 2;
+}
+
+.similar-text .diff {
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  border-radius: 6px;
+}
+
+.note-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.note-text {
+  width: 100%;
+  min-height: 160px;
+  padding: 12px;
+  font: 16px/1.8 var(--ui-font);
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  resize: vertical;
+}
+
+.note-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.note-row {
+  align-items: flex-start;
+}
+
+.note-body {
+  font-size: 15px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.daily {
+  gap: 6px;
+}
+
+.daily-text {
+  margin: 0;
+  font-size: 23px;
+  line-height: 2;
+}
+
+.daily-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.daily-foot .muted {
+  flex: 1;
+}
+
+.card-preview {
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 4 / 5;
+  align-self: center;
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+}
+
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid;
+  margin-inline-end: 6px;
+  vertical-align: -2px;
 }

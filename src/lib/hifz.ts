@@ -25,6 +25,9 @@ export const activity = createStore<Record<string, DayActivity>>('lawh:activity'
 
 export const khatma = createStore<KhatmaPlan | null>('lawh:khatma', null)
 
+/** Completed khatmas. */
+export const khatmaCount = createStore<{ n: number }>('lawh:khatmas', { n: 0 })
+
 export function logActivity(kind: keyof DayActivity, amount = 1) {
   const today = String(dayNumber())
   activity.set((all) => {
@@ -83,5 +86,28 @@ export function clearMistakes(keys: string[]) {
 /** Called when the reader moves forward from `page`: counts it as read and advances the khatma. */
 export function pageFinished(page: number) {
   logActivity('read')
-  khatma.set((plan) => (plan && page === plan.progress + 1 ? { ...plan, progress: page } : plan))
+  const plan = khatma.get()
+  if (plan && page === plan.progress + 1) {
+    khatma.set({ ...plan, progress: page })
+    if (page === 604) khatmaCount.set((c) => ({ n: c.n + 1 }))
+  }
+}
+
+export interface QuizStats {
+  quizzes: number
+  answered: number
+  correct: number
+  /** Quizzes of 10 or more questions answered without a mistake. */
+  perfect: number
+}
+
+export const quizStats = createStore<QuizStats>('lawh:quiz', { quizzes: 0, answered: 0, correct: 0, perfect: 0 })
+
+export function recordQuiz(answered: number, correct: number) {
+  quizStats.set((s) => ({
+    quizzes: s.quizzes + 1,
+    answered: s.answered + answered,
+    correct: s.correct + correct,
+    perfect: s.perfect + (answered >= 10 && correct === answered ? 1 : 0),
+  }))
 }

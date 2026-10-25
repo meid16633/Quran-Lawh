@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react'
+import { BADGES, earned } from './lib/achievements'
+import { badgesEarned, currentProgress, watchedStores } from './lib/progress'
 import { QuranContext } from './lib/context'
 import { loadQuran, type Quran } from './lib/quran'
-import { useRoute } from './lib/router'
+import { navigate, useRoute } from './lib/router'
 import { settings, useStore } from './lib/store'
+import { Achievements } from './screens/Achievements'
+import { Downloads } from './screens/Downloads'
 import { Hifz } from './screens/Hifz'
 import { Home } from './screens/Home'
+import { Quiz } from './screens/Quiz'
 import { Reader } from './screens/Reader'
 import { Wird } from './screens/Wird'
 import { Search } from './screens/Search'
@@ -18,6 +23,24 @@ export function App() {
 
   useEffect(() => {
     loadQuran().then(setQuran, (e: Error) => setError(e.message))
+  }, [])
+
+  // Celebrate newly earned badges, whatever screen earned them.
+  const [celebrate, setCelebrate] = useState<string | null>(null)
+  useEffect(() => {
+    const check = () => {
+      const have = badgesEarned.get()
+      const fresh = earned(currentProgress()).filter((id) => !have[id])
+      if (!fresh.length) return
+      const now = Date.now()
+      badgesEarned.set({ ...have, ...Object.fromEntries(fresh.map((id) => [id, now])) })
+      const first = BADGES.find((b) => b.id === fresh[0])!
+      setCelebrate(fresh.length === 1 ? `وسام جديد: ${first.title}` : `أوسمة جديدة: ${fresh.length}`)
+      setTimeout(() => setCelebrate(null), 3500)
+    }
+    check()
+    const unsubscribe = watchedStores.map((s) => s.subscribe(check))
+    return () => unsubscribe.forEach((u) => u())
   }, [])
 
   useEffect(() => {
@@ -55,6 +78,12 @@ export function App() {
     )
   } else if (screen === 'hifz') {
     content = <Hifz done={route.params.get('done') === '1'} />
+  } else if (screen === 'achievements') {
+    content = <Achievements />
+  } else if (screen === 'downloads') {
+    content = <Downloads />
+  } else if (screen === 'quiz') {
+    content = <Quiz />
   } else if (screen === 'wird') {
     content = <Wird />
   } else if (screen === 'search') {
@@ -65,5 +94,14 @@ export function App() {
     content = <Home />
   }
 
-  return <QuranContext.Provider value={quran}>{content}</QuranContext.Provider>
+  return (
+    <QuranContext.Provider value={quran}>
+      {content}
+      {celebrate && (
+        <button className="celebrate-toast" onClick={() => navigate('achievements')}>
+          🏆 {celebrate}
+        </button>
+      )}
+    </QuranContext.Provider>
+  )
 }

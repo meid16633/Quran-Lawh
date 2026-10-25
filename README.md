@@ -36,6 +36,21 @@
 - Plan a khatma over 7–60 days; today's portion is computed automatically and tracked as you read
 - Streak of active days and a weekly chart of pages read and reviewed
 
+**Study (التدبر والفهم)**
+- Tafsir al-Muyassar and the meanings of unusual words for every ayah
+- Similar verses (المتشابهات) with the differing words highlighted
+- A reflection journal, ayah of the day, and ayahs shared as designed image cards
+
+**Testing and motivation**
+- «اختبر حفظك»: what comes next, which surah, and the missing word — wrong options are taken from similar
+  verses, so the quiz trains exactly the places people confuse
+- Badges and statistics (pages read, reviews, khatmas, longest streak, quiz accuracy)
+- Daily reminder in the Android app
+
+**Offline listening**
+- Download surahs per reciter and listen without internet (EveryAyah allows CORS, so files are stored in
+  Cache Storage and played from there)
+
 **Your data**
 - Everything stays on the device; no account, no tracking
 - Backup and restore as a file (or copied text) to move to another phone

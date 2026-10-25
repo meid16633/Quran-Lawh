@@ -118,6 +118,15 @@ export function Hifz({ done }: { done: boolean }) {
           </div>
         )}
 
+        <button className="card quiz-entry" onClick={() => navigate('quiz')}>
+          <Icon name="cap" size={26} />
+          <span className="row-main">
+            <span className="mini-title">اختبر حفظك</span>
+            <span className="mini-sub">ما بعد الآية، السورة، الكلمة الناقصة — بخيارات من المتشابهات</span>
+          </span>
+          <Icon name="chevronLeft" />
+        </button>
+
         <section className="card">
           <div className="section-head">
             <h2>خريطة المصحف</h2>

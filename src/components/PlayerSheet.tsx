@@ -1,5 +1,6 @@
 import { type PlayerSettings, type Until, player, playerSettings } from '../lib/player'
 import { RECITERS } from '../lib/reciters'
+import { navigate } from '../lib/router'
 import { useStore } from '../lib/store'
 import { Choice, Sheet } from './Sheet'
 
@@ -91,7 +92,16 @@ export function PlayerSheet({ onClose }: { onClose: () => void }) {
         <input type="checkbox" checked={s.follow} onChange={(e) => set({ follow: e.target.checked })} />
         <span>تتبّع التلاوة: تلوين الآية وتقليب الصفحات تلقائيًا</span>
       </label>
-      <p className="muted">التلاوات من موقع EveryAyah وتحتاج اتصالًا بالإنترنت.</p>
+      <button
+        className="button secondary"
+        onClick={() => {
+          onClose()
+          navigate('downloads')
+        }}
+      >
+        تحميل السور للاستماع بدون إنترنت
+      </button>
+      <p className="muted">التلاوات من موقع EveryAyah، وتعمل بدون إنترنت بعد تحميلها.</p>
     </Sheet>
   )
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notification icon: the lawh board, white on transparent as Android requires. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10,2h4a1,1 0,0 1,1 1v2h1.5A2.5,2.5 0,0 1,19 7.5v12A2.5,2.5 0,0 1,16.5 22h-9A2.5,2.5 0,0 1,5 19.5v-12A2.5,2.5 0,0 1,7.5 5H9V3a1,1 0,0 1,1 -1ZM8,10v1.5h8V10ZM8,13.5V15h8v-1.5ZM9,17v1.5h6V17Z" />
+</vector>

@@ -27,6 +27,15 @@ export function Wird() {
       <main className="content">
         {plan ? <PlanCard /> : <NewPlan />}
 
+        <button className="card quiz-entry" onClick={() => navigate('achievements')}>
+          <Icon name="trophy" size={26} />
+          <span className="row-main">
+            <span className="mini-title">إنجازاتي</span>
+            <span className="mini-sub">الأوسمة والإحصاءات</span>
+          </span>
+          <Icon name="chevronLeft" />
+        </button>
+
         <section className="card">
           <div className="section-head">
             <h2>نشاطك</h2>

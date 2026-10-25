@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Icon } from '../components/Icon'
 import { ReminderControls } from '../components/ReminderControls'
+import { TajweedGuide } from '../components/TajweedGuide'
 import { backupFileName, exportBackup, importBackup } from '../lib/backup'
 import { useQuran } from '../lib/context'
 import { mistakes } from '../lib/hifz'
@@ -65,6 +66,8 @@ export function SettingsScreen() {
           </p>
         </section>
 
+        <TajweedSection />
+
         <section className="card settings-section">
           <h2>الحفظ</h2>
           <label className="toggle-row">
@@ -108,6 +111,12 @@ export function SettingsScreen() {
             «التفسير الميسر» و«الميسر في غريب القرآن الكريم» من مجمع الملك فهد، عن المكتبة القرآنية الشاملة (QUL)
             لمنصة ترتيل. أما «المتشابهات» فتُحسب داخل التطبيق من نص المصحف نفسه.
           </p>
+          <h3>ألوان التجويد</h3>
+          <p>
+            أحكام التجويد من مشروع quran-tajweed (مبني على مصحف التجويد الملون من دار المعرفة)، منقولة حرفًا حرفًا إلى نص
+            المجمع، ومراجَعة آليًا على مجموعة قواعد مستقلة من quran.ws مكتوبة من تحفة الأطفال والمقدمة الجزرية، وكلاهما
+            برخصة CC BY 4.0.
+          </p>
           <p className="muted" dir="ltr">
             {q.source.text}. {q.source.meta}.
           </p>
@@ -115,6 +124,28 @@ export function SettingsScreen() {
         </section>
       </main>
     </div>
+  )
+}
+
+function TajweedSection() {
+  const prefs = useStore(readerPrefs)
+  const [guide, setGuide] = useState(false)
+  return (
+    <section className="card settings-section">
+      <h2>التجويد</h2>
+      <label className="toggle-row">
+        <input
+          type="checkbox"
+          checked={prefs.tajweed}
+          onChange={(e) => readerPrefs.set((p) => ({ ...p, tajweed: e.target.checked, tajweedGuideSeen: true }))}
+        />
+        <span>تلوين أحكام التجويد في المصحف</span>
+      </label>
+      <button className="button secondary" onClick={() => setGuide(true)}>
+        <Icon name="palette" size={18} /> دليل الألوان
+      </button>
+      {guide && <TajweedGuide onClose={() => setGuide(false)} />}
+    </section>
   )
 }
 

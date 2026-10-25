@@ -16,6 +16,8 @@
 - Search without diacritics, in modern spelling (الصلاة finds ٱلصَّلَوٰة), by surah name, or by reference (`2:255`, `البقرة ٢٥٥`)
 - Tap an ayah to listen from it, bookmark, copy or share it
 - Light, paper and night themes, adjustable Quran font size; works offline
+- Tajweed colours (madd by length, ghunnah, qalqalah, idgham, silent letters) with a colour guide, checked against a
+  second, independent rule set
 
 **Listening** (12 reciters from [EveryAyah](https://everyayah.com), including Al-Husary's teaching recitation)
 - Follow-along: the recited ayah is highlighted and pages turn by themselves
@@ -87,6 +89,15 @@ Tarteel's Quranic Universal Library as packaged in [tafsir_api](https://github.c
 (`scripts/build-tafsir.mjs`). Similar verses (المتشابهات) are computed from the text by
 `scripts/build-similar.mjs`. Hizb quarters and sajdas come from [quran-meta](https://github.com/quran-center/quran-meta) (MIT).
 
+Tajweed colours come from [quran-tajweed](https://github.com/cpfair/quran-tajweed) (CC BY 4.0), built from the
+Dar al-Maarifah colour-coded mushaf. Its annotations point into the Tanzil text, so `scripts/build-tajweed.mjs` moves
+them onto the King Fahd text letter by letter (an alignment of the base letters of both texts; 1 letter of 73,000
+finds no match). The scholar-authored rule corpus of [quran-ws/quran-tajweed](https://github.com/quran-ws/quran-tajweed)
+(CC BY 4.0) runs directly on our text and fills the few ghunnah and muttasil rulings the first set misses;
+`scripts/check-tajweed.mjs` compares the two colour by colour (agreement: ghunnah 99.5%, qalqalah 100%,
+necessary madd 98.6%, muttasil 99.8%, idgham without ghunnah 95.5%; the differences reviewed are encoding gaps in
+the second set, such as the open tanween and the hamza written under a yeh).
+
 ## Development
 
 ```bash
@@ -95,6 +106,7 @@ npm run dev        # local dev server
 npm test           # unit tests
 npm run build      # production build in dist/
 npm run data       # regenerate public/data/quran.json from the pinned source packages
+npm run tajweed -- <quran-tajweed> <quran-ws>   # regenerate public/data/tajweed.json (see the script header)
 npm run icons      # regenerate icons from public/favicon.svg (needs Playwright)
 ```
 
@@ -113,4 +125,5 @@ installed after uninstalling the previous one.
 
 The app's source code is released under the [MIT License](LICENSE).
 Third-party content keeps its own terms: the Quran text, tafsir and font are © King Fahd Glorious Qur'an
-Printing Complex; quran-meta is MIT; tafsir_api is MIT.
+Printing Complex; quran-meta is MIT; tafsir_api is MIT; the tajweed annotations (cpfair/quran-tajweed and
+quran-ws/quran-tajweed) are CC BY 4.0.

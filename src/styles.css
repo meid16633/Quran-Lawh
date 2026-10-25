@@ -2069,3 +2069,109 @@ select.input {
 .button-row.center {
   justify-content: center;
 }
+
+/* ---------- phase 6: tajweed colours ---------- */
+
+:root {
+  --tj-madd6: #a3122a;
+  --tj-madd45: #e0301e;
+  --tj-madd246: #e47a00;
+  --tj-madd2: #c2707c;
+  --tj-ghunnah: #12873c;
+  --tj-qalqalah: #1b63c4;
+  --tj-idgham: #8656b8;
+  --tj-silent: #9b968c;
+}
+
+:root[data-theme='sepia'] {
+  --tj-silent: #a3957c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='sepia']) {
+    --tj-madd6: #ff6b7f;
+    --tj-madd45: #ff7a5c;
+    --tj-madd246: #ffae42;
+    --tj-madd2: #f0a0aa;
+    --tj-ghunnah: #4cd07d;
+    --tj-qalqalah: #6aa8ff;
+    --tj-idgham: #c29df0;
+    --tj-silent: #7b766b;
+  }
+}
+
+:root[data-theme='dark'] {
+  --tj-madd6: #ff6b7f;
+  --tj-madd45: #ff7a5c;
+  --tj-madd246: #ffae42;
+  --tj-madd2: #f0a0aa;
+  --tj-ghunnah: #4cd07d;
+  --tj-qalqalah: #6aa8ff;
+  --tj-idgham: #c29df0;
+  --tj-silent: #7b766b;
+}
+
+.tj-madd6 {
+  color: var(--tj-madd6);
+}
+
+.tj-madd45 {
+  color: var(--tj-madd45);
+}
+
+.tj-madd246 {
+  color: var(--tj-madd246);
+}
+
+.tj-madd2 {
+  color: var(--tj-madd2);
+}
+
+.tj-ghunnah {
+  color: var(--tj-ghunnah);
+}
+
+.tj-qalqalah {
+  color: var(--tj-qalqalah);
+}
+
+.tj-idgham {
+  color: var(--tj-idgham);
+}
+
+.tj-silent {
+  color: var(--tj-silent);
+}
+
+
+.tajweed-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.tajweed-legend li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tajweed-legend strong {
+  display: block;
+  font-size: 16px;
+}
+
+.tajweed-legend small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.tj-dot {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: currentColor;
+}

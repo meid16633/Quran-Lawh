@@ -87,9 +87,19 @@ export interface ReaderPrefs {
   /** Mode to return to when memorization is switched back on. */
   lastHifz: Exclude<HifzMode, 'off'>
   showMistakes: boolean
+  /** Colour the tajweed rules in the mushaf. */
+  tajweed: boolean
+  /** The colour guide was shown once, when tajweed colours were first switched on. */
+  tajweedGuideSeen: boolean
 }
 
-export const readerPrefs = createStore<ReaderPrefs>('lawh:reader', { hifz: 'off', lastHifz: 'hide', showMistakes: true })
+export const readerPrefs = createStore<ReaderPrefs>('lawh:reader', {
+  hifz: 'off',
+  lastHifz: 'hide',
+  showMistakes: true,
+  tajweed: false,
+  tajweedGuideSeen: false,
+})
 
 export const settings = createStore<Settings>('lawh:settings', { theme: 'auto', fontSize: 26 })
 export const bookmarks = createStore<Bookmark[]>('lawh:bookmarks', [])

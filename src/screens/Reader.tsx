@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon'
 import { PlayerBar } from '../components/PlayerBar'
 import { ShareImage } from '../components/ShareImage'
 import { Sheet } from '../components/Sheet'
+import { TajweedGuide } from '../components/TajweedGuide'
 import { count, mistakesWord } from '../lib/arabic'
 import { useQuran } from '../lib/context'
 import { dayNumber } from '../lib/dates'
@@ -28,6 +29,7 @@ import { back, navigate } from '../lib/router'
 import { type Grade, suggestGrade } from '../lib/srs'
 import { type SimilarData, loadSimilar } from '../lib/study'
 import { bookmarks, createMemoryStore, lastRead, readerPrefs, toggleBookmark, useStore } from '../lib/store'
+import { type TajweedData, loadTajweed, pieces, runsOf } from '../lib/tajweed'
 import { firstLetter, wordKey, words } from '../lib/words'
 
 interface Props {
@@ -58,6 +60,8 @@ export function Reader({ page, highlight, review }: Props) {
   const [study, setStudy] = useState<{ index: number; tab: StudyTab } | null>(null)
   const [sharing, setSharing] = useState<number | null>(null)
   const [similar, setSimilar] = useState<SimilarData | null>(null)
+  const [tajweed, setTajweed] = useState<TajweedData | null>(null)
+  const [guide, setGuide] = useState(false)
   const noteMap = useStore(notes)
   const mark = useStore(wirdMark)
   const pageRef = useRef<HTMLDivElement>(null)
@@ -65,6 +69,17 @@ export function Reader({ page, highlight, review }: Props) {
   useEffect(() => {
     loadSimilar().then(setSimilar, () => {})
   }, [])
+
+  useEffect(() => {
+    if (prefs.tajweed) loadTajweed().then(setTajweed, () => showToast('تعذّر تحميل ألوان التجويد'))
+  }, [prefs.tajweed])
+
+  const toggleTajweed = () => {
+    const on = !prefs.tajweed
+    readerPrefs.set((p) => ({ ...p, tajweed: on, tajweedGuideSeen: true }))
+    if (on && !prefs.tajweedGuideSeen) setGuide(true)
+    else showToast(on ? 'ألوان التجويد ظاهرة' : 'أُخفيت ألوان التجويد')
+  }
 
   const mode = prefs.hifz
   const playing = pstate.status !== 'idle' && pstate.pos && !pstate.pos.basmala ? pstate.pos.i : null
@@ -191,6 +206,8 @@ export function Reader({ page, highlight, review }: Props) {
       blocks.push(<SurahHeader key={`h${s}`} surah={s} />)
     }
     const ws = pageWords[i - first]
+    const runs = prefs.tajweed && tajweed ? runsOf(tajweed, i) : null
+    let offset = 0
     run.push(
       <span
         key={i}
@@ -208,6 +225,8 @@ export function Reader({ page, highlight, review }: Props) {
         )}
         {ws.map((w, k) => {
           const key = wordKey(i, k)
+          const from = offset
+          offset += w.length + 1
           const m = mistakeMap[key]
           let cls = 'w'
           if (isHidden(key)) cls += mode === 'hide' ? ' hidden' : ' first'
@@ -222,7 +241,17 @@ export function Reader({ page, highlight, review }: Props) {
                 data-first={mode === 'first' ? firstLetter(w) : undefined}
                 onClick={onWord(key)}
               >
-                {w}
+                {runs && !isHidden(key)
+                  ? pieces(q.text[i], runs, from, from + w.length).map((p, n) =>
+                      p.cls ? (
+                        <span key={n} className={`tj-${p.cls}`}>
+                          {p.text}
+                        </span>
+                      ) : (
+                        p.text
+                      ),
+                    )
+                  : w}
               </span>
             </Fragment>
           )
@@ -267,6 +296,14 @@ export function Reader({ page, highlight, review }: Props) {
           onClick={() => (playerActive ? player.toggle() : player.play(q, selected ?? first))}
         >
           <Icon name="headphones" />
+        </button>
+        <button
+          className={'icon-button' + (prefs.tajweed ? ' on' : '')}
+          aria-label="ألوان التجويد"
+          aria-pressed={prefs.tajweed}
+          onClick={toggleTajweed}
+        >
+          <Icon name="palette" />
         </button>
         <button className="icon-button" aria-label="بحث" onClick={() => navigate('search')}>
           <Icon name="search" />
@@ -363,6 +400,7 @@ export function Reader({ page, highlight, review }: Props) {
       {study && <AyahStudy index={study.index} tab={study.tab} onClose={() => setStudy(null)} />}
       {sharing !== null && <ShareImage index={sharing} onClose={() => setSharing(null)} />}
       {grading && <GradeSheet page={page} mistakes={marks.size} onClose={() => setGrading(false)} />}
+      {guide && <TajweedGuide onClose={() => setGuide(false)} />}
       {toast && <div className="toast">{toast}</div>}
     </div>
   )

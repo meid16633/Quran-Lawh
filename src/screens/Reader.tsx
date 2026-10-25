@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { AyahStudy, type StudyTab } from '../components/AyahStudy'
 import { Icon } from '../components/Icon'
 import { PlayerBar } from '../components/PlayerBar'
+import { ReciteBar } from '../components/ReciteBar'
 import { ShareImage } from '../components/ShareImage'
 import { Sheet } from '../components/Sheet'
 import { TajweedGuide } from '../components/TajweedGuide'
@@ -62,6 +63,7 @@ export function Reader({ page, highlight, review }: Props) {
   const [similar, setSimilar] = useState<SimilarData | null>(null)
   const [tajweed, setTajweed] = useState<TajweedData | null>(null)
   const [guide, setGuide] = useState(false)
+  const [reciting, setReciting] = useState(false)
   const noteMap = useStore(notes)
   const mark = useStore(wirdMark)
   const pageRef = useRef<HTMLDivElement>(null)
@@ -317,7 +319,7 @@ export function Reader({ page, highlight, review }: Props) {
         onTouchEnd={onTouchEnd}
         onClick={() => (selected !== null ? setSelected(null) : chromeStore.set((c) => !c))}
       >
-        <article className={'page' + (mode !== 'off' ? ' with-tools' : '')}>
+        <article className={'page' + (mode !== 'off' || reciting ? ' with-tools' : '')}>
           {blocks}
           {wirdEndsHere && (
             <button
@@ -352,7 +354,21 @@ export function Reader({ page, highlight, review }: Props) {
           />
         ) : (
           <>
-            {mode !== 'off' && (
+            {reciting && (
+              <ReciteBar
+                page={page}
+                pen={pen}
+                marks={marks.size}
+                onPen={() => setPen((p) => !p)}
+                onRevealAll={() => reveal(pageWords.flatMap((ws, a) => ws.map((_, w) => wordKey(first + a, w))))}
+                onToast={showToast}
+                onClose={() => {
+                  setReciting(false)
+                  setPen(false)
+                }}
+              />
+            )}
+            {mode !== 'off' && !reciting && (
               <HifzBar
                 mode={mode}
                 pen={pen}
@@ -364,6 +380,10 @@ export function Reader({ page, highlight, review }: Props) {
                 onWord={revealNextWord}
                 onAyah={revealNextAyah}
                 onHide={() => setRevealed(new Set())}
+                onRecite={() => {
+                  setRevealed(new Set())
+                  setReciting(true)
+                }}
                 onMemorized={() => {
                   if (isMemorized) {
                     unmarkMemorized(page)
@@ -379,7 +399,8 @@ export function Reader({ page, highlight, review }: Props) {
             {playerActive ? (
               <PlayerBar />
             ) : (
-              mode === 'off' && (
+              mode === 'off' &&
+              !reciting && (
                 <nav className={'pager' + (chrome ? '' : ' hidden')}>
                   <button className="icon-button" aria-label="الصفحة السابقة" onClick={() => goTo(page - 1)} disabled={page <= 1}>
                     <Icon name="chevronRight" />
@@ -434,6 +455,7 @@ interface HifzBarProps {
   onWord: () => void
   onAyah: () => void
   onHide: () => void
+  onRecite: () => void
   onMemorized: () => void
   onFinish: () => void
 }
@@ -467,6 +489,9 @@ function HifzBar(p: HifzBarProps) {
         <button className="tool big" onClick={p.onAyah}>اكشف آية</button>
         <button className="tool big" aria-label="إخفاء الكل" onClick={p.onHide}>
           <Icon name="refresh" size={18} />
+        </button>
+        <button className="tool big" aria-label="سمّع لنفسك" onClick={p.onRecite}>
+          <Icon name="mic" size={18} />
         </button>
         {p.review && (
           <button className="tool big primary" onClick={p.onFinish}>

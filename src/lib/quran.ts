@@ -110,6 +110,6 @@ export async function loadQuran(): Promise<Quran> {
 
 const DIGITS = '٠١٢٣٤٥٦٧٨٩'
 
-export function arabicDigits(n: number): string {
+export function arabicDigits(n: number | string): string {
   return String(n).replace(/\d/g, (d) => DIGITS[Number(d)])
 }

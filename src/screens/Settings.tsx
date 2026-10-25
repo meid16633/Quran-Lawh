@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { ReminderControls } from '../components/ReminderControls'
 import { TajweedGuide } from '../components/TajweedGuide'
@@ -6,6 +6,7 @@ import { backupFileName, exportBackup, importBackup } from '../lib/backup'
 import { useQuran } from '../lib/context'
 import { mistakes } from '../lib/hifz'
 import { arabicDigits } from '../lib/quran'
+import { deleteAllTakes, recordingsUsage } from '../lib/recorder'
 import { back, navigate } from '../lib/router'
 import { readerPrefs, settings, useStore, type Theme } from '../lib/store'
 
@@ -79,6 +80,7 @@ export function SettingsScreen() {
             <span>تلوين الكلمات التي أخطأت فيها أثناء القراءة العادية</span>
           </label>
           <ClearMistakes />
+          <ClearRecordings />
         </section>
 
         <ReminderSection />
@@ -146,6 +148,33 @@ function TajweedSection() {
       </button>
       {guide && <TajweedGuide onClose={() => setGuide(false)} />}
     </section>
+  )
+}
+
+function ClearRecordings() {
+  const [usage, setUsage] = useState<{ count: number; bytes: number } | null>(null)
+  const [confirm, setConfirm] = useState(false)
+  useEffect(() => {
+    recordingsUsage().then(setUsage, () => {})
+  }, [])
+  if (!usage?.count) return null
+  const mb = arabicDigits(Math.max(0.1, usage.bytes / 1e6).toFixed(1)).replace('.', '٫')
+  return confirm ? (
+    <div className="button-row">
+      <button
+        className="button danger"
+        onClick={() => deleteAllTakes().then(() => setUsage({ count: 0, bytes: 0 }), () => {})}
+      >
+        نعم، احذف التسجيلات
+      </button>
+      <button className="button ghost" onClick={() => setConfirm(false)}>
+        تراجع
+      </button>
+    </div>
+  ) : (
+    <button className="text-button" onClick={() => setConfirm(true)}>
+      <Icon name="trash" size={18} /> حذف تسجيلات «سمّع لنفسك» ({arabicDigits(usage.count)} تسجيل، {mb} م.ب)
+    </button>
   )
 }
 

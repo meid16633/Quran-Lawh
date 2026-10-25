@@ -63,6 +63,8 @@ class Player {
   private loadedUrl: string | null = null
   private objectUrl: string | null = null
   private loadToken = 0
+  /** Play the range once, with no repeats and no pause after each ayah (to compare with a recording). */
+  private once = false
 
   private get state() {
     return playerState.get()
@@ -91,8 +93,9 @@ class Player {
   }
 
   /** Start playing from ayah `from`. The end of the range comes from the "until" setting unless given. */
-  play(quran: Quran, from: number, to?: number) {
+  play(quran: Quran, from: number, to?: number, { once = false } = {}) {
     this.quran = quran
+    this.once = once
     const until = to ?? rangeEnd(quran, from, playerSettings.get().until)
     this.clearGap()
     this.set({ range: { from, to: Math.max(from, until) } })
@@ -191,7 +194,8 @@ class Player {
     const { range } = this.state
     if (!range || !this.quran) return null
     const s = playerSettings.get()
-    return nextPosition(pos, range, { ayah: s.ayahRepeat, range: s.rangeRepeat }, this.quran)
+    const repeats = this.once ? { ayah: 1, range: 1 } : { ayah: s.ayahRepeat, range: s.rangeRepeat }
+    return nextPosition(pos, range, repeats, this.quran)
   }
 
   private advance() {
@@ -202,7 +206,7 @@ class Player {
       this.stop()
       return
     }
-    const gap = pos.basmala ? 0 : playerSettings.get().gap
+    const gap = pos.basmala || this.once ? 0 : playerSettings.get().gap
     if (gap > 0) {
       this.set({ status: 'waiting' })
       this.gapTimer = setTimeout(() => this.load(next), gap * 1000)

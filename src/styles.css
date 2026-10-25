@@ -2175,3 +2175,67 @@ select.input {
   border-radius: 50%;
   background: currentColor;
 }
+
+/* ---------- phase 6: recite to yourself ---------- */
+
+.recite-bar .hint {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.recite-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+.recite-bar .takes {
+  flex: 1 1 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.recite-bar .takes .chip {
+  white-space: nowrap;
+}
+
+.rec-dot {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: rec-pulse 1.2s ease-in-out infinite;
+}
+
+.rec-dot.still {
+  animation: none;
+  background: currentColor;
+}
+
+.rec-time {
+  min-width: 52px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.tool.danger-fill {
+  background: var(--danger);
+  color: #fff;
+}
+
+@keyframes rec-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rec-dot {
+    animation: none;
+  }
+}

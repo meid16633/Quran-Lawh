@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react'
 import { BADGES, earned } from './lib/achievements'
 import { badgesEarned, currentProgress, watchedStores } from './lib/progress'
 import { QuranContext } from './lib/context'
+import { khatma, wirdMark } from './lib/hifz'
+import { applyPeriodic, periodic, periodicAvailable } from './lib/periodic'
 import { loadQuran, type Quran } from './lib/quran'
 import { navigate, useRoute } from './lib/router'
-import { settings, useStore } from './lib/store'
+import { lastRead, settings, useStore } from './lib/store'
+import { syncWidget, widgetAvailable } from './lib/widget'
 import { Achievements } from './screens/Achievements'
 import { Downloads } from './screens/Downloads'
 import { Hifz } from './screens/Hifz'
@@ -42,6 +45,58 @@ export function App() {
     const unsubscribe = watchedStores.map((s) => s.subscribe(check))
     return () => unsubscribe.forEach((u) => u())
   }, [])
+
+  // Android: keep the periodic reminders topped up whenever the app comes to the foreground, and open the mushaf on
+  // the ayah of a reminder that was tapped.
+  useEffect(() => {
+    if (!quran || !periodicAvailable()) return
+    const refresh = () => {
+      if (periodic.get().enabled) void applyPeriodic(quran, periodic.get())
+    }
+    refresh()
+    const handles = Promise.all([
+      import('@capacitor/app').then(({ App: CapApp }) => CapApp.addListener('resume', refresh)),
+      import('@capacitor/local-notifications').then(({ LocalNotifications }) =>
+        LocalNotifications.addListener('localNotificationActionPerformed', ({ notification }) => {
+          const ayah = notification.extra?.ayah
+          if (typeof ayah === 'number') navigate(`read/${quran.pageOf(ayah)}?a=${ayah}`)
+        }),
+      ),
+    ])
+    return () => {
+      void handles.then((hs) => hs.forEach((h) => void h.remove()))
+    }
+  }, [quran])
+
+  // Android home-screen widget: keep its texts current, and follow its links (lawh://wird, lawh://ayah/<index>).
+  useEffect(() => {
+    if (!quran || !widgetAvailable()) return
+    const sync = () => void syncWidget(quran).catch(() => {})
+    sync()
+    const unsubscribe = [khatma.subscribe(sync), wirdMark.subscribe(sync)]
+    const open = (url: string | undefined) => {
+      if (!url?.startsWith('lawh://')) return
+      const ayah = url.match(/^lawh:\/\/ayah\/(\d+)/)
+      if (ayah) {
+        const i = Number(ayah[1])
+        navigate(`read/${quran.pageOf(i)}?a=${i}`)
+      } else {
+        const mark = wirdMark.get()
+        const plan = khatma.get()
+        if (mark) navigate(`read/${mark.page}?a=${mark.ayah}`)
+        else if (plan && plan.progress < quran.pageCount) navigate(`read/${plan.progress + 1}`)
+        else navigate(lastRead.get() ? `read/${lastRead.get()!.page}` : 'wird')
+      }
+    }
+    const handles = import('@capacitor/app').then(async ({ App: CapApp }) => {
+      open((await CapApp.getLaunchUrl())?.url)
+      return Promise.all([CapApp.addListener('appUrlOpen', (e) => open(e.url)), CapApp.addListener('resume', sync)])
+    })
+    return () => {
+      unsubscribe.forEach((u) => u())
+      void handles.then((hs) => hs.forEach((h) => void h.remove()))
+    }
+  }, [quran])
 
   useEffect(() => {
     const root = document.documentElement

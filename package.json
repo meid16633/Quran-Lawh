@@ -1,7 +1,7 @@
 {
   "name": "quran-lawh",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "لَوْح – احفظ وراجع: a free, ad-free, offline Quran app",
   "type": "module",
   "scripts": {
@@ -11,6 +11,7 @@
     "test": "vitest run",
     "data": "npm install --no-save quran-json@3.1.2 quran-meta@7.0.0 && node scripts/build-data.mjs",
     "verify-text": "node scripts/verify-text.mjs",
+    "tajweed": "npm install --no-save quran@0.0.9 && node scripts/build-tajweed.mjs",
     "icons": "node scripts/build-icons.mjs",
     "android:sync": "npm run build && cap sync android",
     "check-reciters": "node scripts/check-reciters.mjs"

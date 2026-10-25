@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Icon } from '../components/Icon'
+import { PeriodicControls } from '../components/PeriodicControls'
 import { ReminderControls } from '../components/ReminderControls'
+import { TajweedGuide } from '../components/TajweedGuide'
 import { backupFileName, exportBackup, importBackup } from '../lib/backup'
 import { useQuran } from '../lib/context'
 import { mistakes } from '../lib/hifz'
 import { arabicDigits } from '../lib/quran'
+import { deleteAllTakes, recordingsUsage } from '../lib/recorder'
 import { back, navigate } from '../lib/router'
 import { readerPrefs, settings, useStore, type Theme } from '../lib/store'
+import { widgetAvailable } from '../lib/widget'
 
 const THEMES: [Theme, string][] = [
   ['auto', 'تلقائي'],
@@ -65,6 +69,8 @@ export function SettingsScreen() {
           </p>
         </section>
 
+        <TajweedSection />
+
         <section className="card settings-section">
           <h2>الحفظ</h2>
           <label className="toggle-row">
@@ -76,9 +82,25 @@ export function SettingsScreen() {
             <span>تلوين الكلمات التي أخطأت فيها أثناء القراءة العادية</span>
           </label>
           <ClearMistakes />
+          <ClearRecordings />
         </section>
 
         <ReminderSection />
+
+        <section className="card settings-section">
+          <h2>آية وذكر على شاشة القفل</h2>
+          <PeriodicControls />
+        </section>
+
+        {widgetAvailable() && (
+          <section className="card settings-section">
+            <h2>ويدجت الشاشة الرئيسية</h2>
+            <p className="muted">
+              اضغط مطولًا على مكان فارغ في الشاشة الرئيسية، واختر «الأدوات» أو «Widgets»، ثم «لوح»: يظهر وردك اليوم وكم
+              بقي منه، وآية اليوم. الضغط على الورد يفتحه من علامة الورد، والضغط على الآية يفتحها في المصحف.
+            </p>
+          </section>
+        )}
 
         <section className="card settings-section">
           <h2>التلاوات</h2>
@@ -108,6 +130,17 @@ export function SettingsScreen() {
             «التفسير الميسر» و«الميسر في غريب القرآن الكريم» من مجمع الملك فهد، عن المكتبة القرآنية الشاملة (QUL)
             لمنصة ترتيل. أما «المتشابهات» فتُحسب داخل التطبيق من نص المصحف نفسه.
           </p>
+          <h3>الأحاديث والأذكار</h3>
+          <p>
+            ما يظهر على شاشة القفل نصوص قصيرة من صحيحي البخاري ومسلم فقط، طوبق كل نص منها آليًا كلمةً كلمة مع متن الكتاب
+            المنسوب إليه، و«متفق عليه» لما وُجد فيهما معًا.
+          </p>
+          <h3>ألوان التجويد</h3>
+          <p>
+            أحكام التجويد من مشروع quran-tajweed (مبني على مصحف التجويد الملون من دار المعرفة)، منقولة حرفًا حرفًا إلى نص
+            المجمع، ومراجَعة آليًا على مجموعة قواعد مستقلة من quran.ws مكتوبة من تحفة الأطفال والمقدمة الجزرية، وكلاهما
+            برخصة CC BY 4.0.
+          </p>
           <p className="muted" dir="ltr">
             {q.source.text}. {q.source.meta}.
           </p>
@@ -115,6 +148,55 @@ export function SettingsScreen() {
         </section>
       </main>
     </div>
+  )
+}
+
+function TajweedSection() {
+  const prefs = useStore(readerPrefs)
+  const [guide, setGuide] = useState(false)
+  return (
+    <section className="card settings-section">
+      <h2>التجويد</h2>
+      <label className="toggle-row">
+        <input
+          type="checkbox"
+          checked={prefs.tajweed}
+          onChange={(e) => readerPrefs.set((p) => ({ ...p, tajweed: e.target.checked, tajweedGuideSeen: true }))}
+        />
+        <span>تلوين أحكام التجويد في المصحف</span>
+      </label>
+      <button className="button secondary" onClick={() => setGuide(true)}>
+        <Icon name="palette" size={18} /> دليل الألوان
+      </button>
+      {guide && <TajweedGuide onClose={() => setGuide(false)} />}
+    </section>
+  )
+}
+
+function ClearRecordings() {
+  const [usage, setUsage] = useState<{ count: number; bytes: number } | null>(null)
+  const [confirm, setConfirm] = useState(false)
+  useEffect(() => {
+    recordingsUsage().then(setUsage, () => {})
+  }, [])
+  if (!usage?.count) return null
+  const mb = arabicDigits(Math.max(0.1, usage.bytes / 1e6).toFixed(1)).replace('.', '٫')
+  return confirm ? (
+    <div className="button-row">
+      <button
+        className="button danger"
+        onClick={() => deleteAllTakes().then(() => setUsage({ count: 0, bytes: 0 }), () => {})}
+      >
+        نعم، احذف التسجيلات
+      </button>
+      <button className="button ghost" onClick={() => setConfirm(false)}>
+        تراجع
+      </button>
+    </div>
+  ) : (
+    <button className="text-button" onClick={() => setConfirm(true)}>
+      <Icon name="trash" size={18} /> حذف تسجيلات «سمّع لنفسك» ({arabicDigits(usage.count)} تسجيل، {mb} م.ب)
+    </button>
   )
 }
 

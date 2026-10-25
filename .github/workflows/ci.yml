@@ -56,18 +56,32 @@ jobs:
         working-directory: android
         env:
           VERSION_CODE: ${{ github.run_number }}
+          SIGNING_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        # The app's signing key is committed encrypted (signing/lawh.p12.enc); one secret, its password, unlocks
+        # it. Every build is then signed with the same key, so updates install over the previous version.
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
+          if [ -n "$SIGNING_PASSWORD" ]; then
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:SIGNING_PASSWORD \
+              -in signing/lawh.p12.enc -out "$RUNNER_TEMP/release.p12"
+            export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/release.p12" ANDROID_KEY_ALIAS=lawh
+            export ANDROID_KEYSTORE_PASSWORD="$SIGNING_PASSWORD" ANDROID_KEY_PASSWORD="$SIGNING_PASSWORD"
+          elif [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
             export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/release.jks"
+          else
+            echo "::warning::No signing key configured; the APK is signed with a temporary debug key."
           fi
           ./gradlew assembleRelease --no-daemon
       - name: Name the APK
         run: cp android/app/build/outputs/apk/release/app-release.apk lawh.apk
+      - name: Show the signing certificate
+        run: |
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs lawh.apk | grep -E "DN|SHA-256"
       - uses: actions/upload-artifact@v4
         with:
           name: lawh-apk

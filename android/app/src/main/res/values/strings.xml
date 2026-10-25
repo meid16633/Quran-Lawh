@@ -4,4 +4,9 @@
     <string name="title_activity_main">لوح</string>
     <string name="package_name">io.github.meid16633.lawh</string>
     <string name="custom_url_scheme">io.github.meid16633.lawh</string>
+    <string name="widget_title">وردك اليوم</string>
+    <string name="widget_empty">افتح لوح لتبدأ وردك</string>
+    <string name="widget_ayah_placeholder">آية اليوم تظهر هنا</string>
+    <string name="widget_label">لوح – الورد وآية اليوم</string>
+    <string name="widget_description">وردك اليوم وآية اليوم</string>
 </resources>

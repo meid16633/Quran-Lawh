@@ -116,10 +116,14 @@ Built with React, TypeScript, Vite and `vite-plugin-pwa`. The Android app wraps 
 
 ### Android signing
 
-CI signs the APK with the keystore in these repository secrets, if present:
-`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
-Without them it falls back to a temporary debug key, which is fine for testing but means each new build has to be
-installed after uninstalling the previous one.
+The app's signing key is in the repository, encrypted: `android/signing/lawh.p12.enc` (PKCS#12, alias `lawh`,
+AES-256 with PBKDF2, 600,000 iterations, under a random 32-character password). CI decrypts it with the repository
+secret `ANDROID_SIGNING_PASSWORD`, which is also the keystore and key password, so every build is signed with the same
+key and installs over the previous one. Keep a copy of that password: without it the key cannot be recovered, and a
+new key means every user has to uninstall once.
+
+A keystore of your own can be used instead through `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`. With no secret at all, CI falls back to a temporary debug key.
 
 ## License
 

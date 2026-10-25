@@ -13,7 +13,7 @@ export function parseWordKey(key: string): [number, number] {
   return [Number(a), Number(w)]
 }
 
-const COMBINING = /[ؐ-ًؚ-ٰٟۖ-ۭ]/
+const COMBINING = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/
 // Letters that never connect to the following letter, so no tatweel is drawn after them.
 const NON_JOINING = new Set([...'اأإآٱدذرزوؤءة'])
 
@@ -23,7 +23,7 @@ const NON_JOINING = new Set([...'اأإآٱدذرزوؤءة'])
  * "بِسۡمِ" -> "بِـ", "ٱلنَّبَإِ" -> "ٱلنَّـ", "وَٱلۡجِبَالَ" -> "وَٱلۡجِـ", "وَمَا" -> "وَمَـ".
  */
 export function firstLetter(word: string): string {
-  const chars = [...word.replace(/^۞\s*/, '')]
+  const chars = [...word.replace(/^\u06DE\s*/, '')]
   const isLetter = (c: string) => /[\u0621-\u064A\u0671]/.test(c)
   const letterFrom = (i: number) => chars.findIndex((c, k) => k >= i && isLetter(c))
   // Index just past the letter at i and its vowel marks.
@@ -55,4 +55,9 @@ export function firstLetter(word: string): string {
   }
   const joins = letterFrom(end) >= 0 && !NON_JOINING.has(letter)
   return chars.slice(first, end).join('') + (joins ? 'ـ' : '')
+}
+
+/** The verse without the hizb sign (۞) that marks quarters in the mushaf, for display outside the page. */
+export function verseOnly(text: string): string {
+  return text.replace(/^\u06DE\s*/, '')
 }

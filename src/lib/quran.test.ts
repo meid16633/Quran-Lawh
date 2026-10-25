@@ -9,6 +9,7 @@ const q = new Quran(data)
 describe('Quran data', () => {
   it('has the full Hafs text', () => {
     expect(data.text).toHaveLength(6236)
+    expect(data.plain).toHaveLength(6236)
     expect(data.surahs).toHaveLength(114)
     expect(data.pages).toHaveLength(604)
     expect(data.juz).toHaveLength(30)
@@ -20,7 +21,7 @@ describe('Quran data', () => {
   // together with a deliberate, reviewed update of the source package.
   it('matches the pinned checksum of the verse text', () => {
     const hash = createHash('sha256').update(data.text.join('\n')).digest('hex')
-    expect(hash).toBe('39ff52afa15b2e3f1027dda4dfbcfeec5b4001a19430ccc3e141a2d0f1b490c0')
+    expect(hash).toBe('a20f359432112bd007fbf1aa3b371aba959b54be683883e39fa5773fe711459a')
   })
 })
 
@@ -43,10 +44,16 @@ describe('Quran navigation', () => {
     expect(q.pageOf(q.indexOf(114, 6))).toBe(604)
   })
 
-  it('knows juz starts', () => {
+  it('knows juz starts of the Madinah mushaf', () => {
     expect(q.juzOf(q.indexOf(2, 141))).toBe(1)
     expect(q.juzOf(q.indexOf(2, 142))).toBe(2)
+    expect(q.juzStart(4)).toBe(q.indexOf(3, 92))
+    expect(q.juzStart(11)).toBe(q.indexOf(9, 94))
     expect(q.juzOf(q.indexOf(78, 1))).toBe(30)
+  })
+
+  it('starts a hizb quarter at every juz', () => {
+    for (let j = 1; j <= 30; j++) expect(q.hizbQuarterOf(q.juzStart(j))).toBe((j - 1) * 8 + 1)
   })
 
   it('splits the mushaf into contiguous pages', () => {

@@ -1,24 +1,28 @@
 import { useState } from 'react'
 import { Icon } from '../components/Icon'
+import { ShareImage } from '../components/ShareImage'
 import { TabLayout } from '../components/TabLayout'
 import { TopBar } from '../components/TopBar'
 import { useQuran } from '../lib/context'
+import { ayahOfTheDay } from '../lib/daily'
 import { dayNumber } from '../lib/dates'
 import { khatma, memorized } from '../lib/hifz'
 import { khatmaStatus } from '../lib/khatma'
+import { notes } from '../lib/notes'
 import { arabicDigits } from '../lib/quran'
 import { navigate } from '../lib/router'
 import { isDue } from '../lib/srs'
+import { verseOnly } from '../lib/words'
 import { bookmarks, lastRead, toggleBookmark, useStore } from '../lib/store'
 
-type Tab = 'surahs' | 'juz' | 'bookmarks'
+type Tab = 'surahs' | 'juz' | 'bookmarks' | 'notes'
 
 const TAB_KEY = 'lawh:home-tab'
 
 function initialTab(): Tab {
   try {
     const t = sessionStorage.getItem(TAB_KEY)
-    if (t === 'surahs' || t === 'juz' || t === 'bookmarks') return t
+    if (t === 'surahs' || t === 'juz' || t === 'bookmarks' || t === 'notes') return t
   } catch {
     // ignore
   }
@@ -46,6 +50,7 @@ export function Home() {
       <main className="content">
         <ContinueCard />
         <TodayCards />
+        <DailyAyah />
         <GoToPage />
 
         <div className="tabs" role="tablist">
@@ -54,6 +59,7 @@ export function Home() {
               ['surahs', 'السور'],
               ['juz', 'الأجزاء'],
               ['bookmarks', 'العلامات'],
+              ['notes', 'تدبّراتي'],
             ] as const
           ).map(([id, label]) => (
             <button key={id} role="tab" aria-selected={tab === id} className="tab" onClick={() => setTab(id)}>
@@ -65,6 +71,7 @@ export function Home() {
         {tab === 'surahs' && <SurahList />}
         {tab === 'juz' && <JuzList />}
         {tab === 'bookmarks' && <BookmarkList />}
+        {tab === 'notes' && <NotesList />}
       </main>
     </TabLayout>
   )
@@ -189,7 +196,7 @@ function JuzList() {
       {Array.from({ length: 30 }, (_, j) => {
         const start = q.juzStart(j + 1)
         const page = q.pageOf(start)
-        const words = q.text[start].replace('۞', '').trim().split(' ').slice(0, 4).join(' ')
+        const words = q.text[start].replace('\u06DE', '').trim().split(' ').slice(0, 4).join(' ')
         return (
           <li key={j}>
             <button className="row" onClick={() => navigate(`read/${page}`)}>
@@ -238,6 +245,65 @@ function BookmarkList() {
           </li>
         )
       })}
+    </ul>
+  )
+}
+
+function DailyAyah() {
+  const q = useQuran()
+  const i = ayahOfTheDay(q, dayNumber())
+  const [sharing, setSharing] = useState(false)
+  return (
+    <section className="card daily">
+      <span className="card-label">آية اليوم</span>
+      <p className="quran-font daily-text">
+        {verseOnly(q.text[i])} {arabicDigits(q.ayahNo(i))}
+      </p>
+      <div className="daily-foot">
+        <span className="muted">
+          {q.surahs[q.surahOf(i)].name} • آية {arabicDigits(q.ayahNo(i))}
+        </span>
+        <button className="text-button" onClick={() => navigate(`read/${q.pageOf(i)}?a=${i}`)}>
+          في المصحف
+        </button>
+        <button className="text-button" onClick={() => setSharing(true)}>
+          <Icon name="image" size={18} /> صورة
+        </button>
+      </div>
+      {sharing && <ShareImage index={i} onClose={() => setSharing(false)} />}
+    </section>
+  )
+}
+
+function NotesList() {
+  const q = useQuran()
+  const all = useStore(notes)
+  const list = Object.entries(all)
+    .map(([i, n]) => ({ i: Number(i), ...n }))
+    .sort((a, b) => b.at - a.at)
+  if (!list.length) {
+    return (
+      <p className="empty">
+        لم تكتب تدبّرات بعد. اضغط على أي آية أثناء القراءة، ثم «تدبّر»، واكتب ما وقع في قلبك منها.
+      </p>
+    )
+  }
+  return (
+    <ul className="list">
+      {list.map((n) => (
+        <li key={n.i}>
+          <button className="row note-row" onClick={() => navigate(`read/${q.pageOf(n.i)}?a=${n.i}`)}>
+            <span className="row-main">
+              <span className="row-sub">
+                {q.surahs[q.surahOf(n.i)].name} • آية {arabicDigits(q.ayahNo(n.i))} •{' '}
+                {new Date(n.at).toLocaleDateString('ar-EG')}
+              </span>
+              <span className="quran-font snippet">{q.text[n.i]}</span>
+              <span className="note-body">{n.text}</span>
+            </span>
+          </button>
+        </li>
+      ))}
     </ul>
   )
 }

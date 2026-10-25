@@ -1,7 +1,7 @@
 {
   "name": "quran-lawh",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "لَوْح – احفظ وراجع: a free, ad-free, offline Quran app",
   "type": "module",
   "scripts": {
@@ -19,6 +19,7 @@
     "@capacitor/android": "^8.5.3",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
+    "@capacitor/local-notifications": "^8.3.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

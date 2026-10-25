@@ -4,6 +4,16 @@ import { readFileSync } from 'node:fs'
 
 const reciters = JSON.parse(readFileSync(new URL('../src/data/reciters.json', import.meta.url), 'utf8'))
 let failed = false
+
+// Downloading recitations for offline use needs CORS on the audio host; report it once.
+{
+  const res = await fetch('https://everyayah.com/data/Alafasy_128kbps/001001.mp3', {
+    method: 'GET',
+    headers: { Origin: 'https://meid16633.github.io', Range: 'bytes=0-15' },
+  })
+  const h = (k) => res.headers.get(k) ?? '-'
+  console.log(`CORS: status ${res.status}, allow-origin ${h('access-control-allow-origin')}, accept-ranges ${h('accept-ranges')}, cache-control ${h('cache-control')}`)
+}
 for (const r of reciters) {
   for (const file of ['001001', '114006']) {
     const url = `https://everyayah.com/data/${r.folder}/${file}.mp3`

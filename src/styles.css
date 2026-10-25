@@ -1770,3 +1770,202 @@ button:disabled {
   margin-inline-end: 6px;
   vertical-align: -2px;
 }
+
+/* ---------- phase 4: quiz ---------- */
+
+.quiz-progress {
+  margin-inline-start: auto;
+  padding: 0 8px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.quiz-entry {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent);
+}
+
+.select-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+select.input {
+  appearance: auto;
+}
+
+.quiz-card {
+  gap: 8px;
+}
+
+.quiz-ayah {
+  margin: 0;
+  font-size: 24px;
+  line-height: 2.1;
+}
+
+.blank {
+  display: inline-block;
+  min-width: 70px;
+  padding: 0 6px;
+  border-bottom: 2px dashed var(--accent);
+  color: var(--accent);
+  text-align: center;
+}
+
+.blank.filled {
+  border-bottom-style: solid;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quiz-option {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  font-size: 22px;
+  line-height: 1.9;
+  text-align: center;
+}
+
+.quiz-option.long {
+  font-size: 19px;
+  text-align: start;
+}
+
+.quiz-option.right {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.quiz-option.wrong {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.quiz-option:disabled {
+  opacity: 1;
+}
+
+.quiz-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.good {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.result-card {
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.result-card.perfect {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.score {
+  font-size: 34px;
+  color: var(--accent);
+}
+
+.bar-track {
+  display: block;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s;
+}
+
+/* ---------- achievements ---------- */
+
+.badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.badge-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  opacity: 0.75;
+}
+
+.badge-item + .badge-item {
+  border-top: 1px solid var(--border);
+}
+
+.badge-item.done {
+  opacity: 1;
+}
+
+.badge-icon {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.badge-item.done .badge-icon {
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
+  color: var(--gold);
+}
+
+.celebrate-toast {
+  position: fixed;
+  top: calc(var(--safe-top) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: drop-in 0.3s ease-out;
+  white-space: nowrap;
+}
+
+@keyframes drop-in {
+  from {
+    transform: translate(-50%, -150%);
+  }
+}
+
+.time-input {
+  flex: 0 0 auto;
+  width: 130px;
+}

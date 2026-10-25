@@ -1,3 +1,4 @@
+import { cachedUrl } from './audioCache'
 import type { Quran } from './quran'
 import { type Position, type Range, nextPosition, startAt } from './queue'
 import { ayahUrl, reciterById } from './reciters'
@@ -58,6 +59,10 @@ class Player {
   private preload: HTMLAudioElement | null = null
   private quran: Quran | null = null
   private gapTimer: ReturnType<typeof setTimeout> | null = null
+  /** The EveryAyah URL now loaded, and the local copy's object URL when it was downloaded. */
+  private loadedUrl: string | null = null
+  private objectUrl: string | null = null
+  private loadToken = 0
 
   private get state() {
     return playerState.get()
@@ -98,7 +103,10 @@ class Player {
     const a = this.audio
     if (!a || !this.state.pos) return
     if (this.state.status === 'paused' || this.state.status === 'error') {
-      if (this.state.status === 'error') this.load(this.state.pos)
+      if (this.state.status === 'error') {
+        this.loadedUrl = null
+        this.load(this.state.pos)
+      }
       else void a.play().catch(() => this.set({ status: 'error' }))
       this.set({ status: 'playing' })
     } else {
@@ -141,19 +149,41 @@ class Player {
     const a = this.element()
     this.set({ pos, status: 'loading' })
     const url = this.url(pos)
-    // Repeating the same ayah rewinds instead of downloading the file again.
-    if (a.src === url) a.currentTime = 0
-    else a.src = url
-    a.defaultPlaybackRate = a.playbackRate = playerSettings.get().speed
-    void a.play().catch((e: DOMException) => {
-      // Autoplay refused (no user gesture) leaves the player paused rather than broken.
-      this.set({ status: e.name === 'NotAllowedError' ? 'paused' : 'error' })
-    })
+    const token = ++this.loadToken
+    const start = (src: string | null) => {
+      if (token !== this.loadToken) return // a newer load replaced this one
+      // Repeating the same ayah rewinds instead of loading the file again.
+      if (src === null) a.currentTime = 0
+      else a.src = src
+      a.defaultPlaybackRate = a.playbackRate = playerSettings.get().speed
+      void a.play().catch((e: DOMException) => {
+        // Autoplay refused (no user gesture) leaves the player paused rather than broken.
+        this.set({ status: e.name === 'NotAllowedError' ? 'paused' : 'error' })
+      })
+    }
+    if (url === this.loadedUrl) {
+      start(null)
+    } else {
+      // Use the downloaded copy when there is one, otherwise stream.
+      void cachedUrl(url).then((local) => {
+        if (token !== this.loadToken) {
+          if (local) URL.revokeObjectURL(local)
+          return
+        }
+        if (this.objectUrl) URL.revokeObjectURL(this.objectUrl)
+        this.objectUrl = local
+        this.loadedUrl = url
+        start(local ?? url)
+      })
+    }
     this.updateMediaSession(pos)
     const next = this.peek(pos)
     if (next && this.preload) {
-      this.preload.src = this.url(next)
-      this.preload.load()
+      const nextUrl = this.url(next)
+      if (nextUrl !== url) {
+        this.preload.src = nextUrl
+        this.preload.load()
+      }
     }
   }
 
